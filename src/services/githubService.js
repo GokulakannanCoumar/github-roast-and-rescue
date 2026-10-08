@@ -330,7 +330,7 @@ class GitHubService {
       }
     }
 
-    const repos = (Array.isArray(reposData) ? reposData : []).map(repo => ({
+    const allRepos = (Array.isArray(reposData) ? reposData : []).map(repo => ({
       name: repo.name,
       description: repo.description || '',
       language: repo.language || 'Unknown',
@@ -342,8 +342,9 @@ class GitHubService {
       hasReadme: true
     }));
 
+    const repos = allRepos.slice(0, 15);
     const languageCounts = {};
-    for (const repo of repos) {
+    for (const repo of allRepos) {
       if (repo.language && repo.language !== 'Unknown') {
         languageCounts[repo.language] = (languageCounts[repo.language] || 0) + 1;
       }
@@ -362,17 +363,18 @@ class GitHubService {
         ('https://github.com/' + encodeURIComponent(user.login) + '.png?size=160'),
       profileUrl: user.html_url ||
         ('https://github.com/' + encodeURIComponent(user.login)),
-      publicRepos: user.public_repos || repos.length,
+      publicRepos: user.public_repos || allRepos.length,
       followers: user.followers || 0,
       following: user.following || 0,
       blog: user.blog || '',
       company: user.company || '',
       location: user.location || '',
       createdAt: user.created_at ? user.created_at.split('T')[0] : 'Unknown',
-      repos: repos.slice(0, 15),
-      originalReposCount: repos.filter(repo => !repo.isFork).length,
-      forkedReposCount: repos.filter(repo => repo.isFork).length,
-      reposWithDemoCount: repos.filter(repo => Boolean(repo.homepage)).length,
+      repos,
+      reposAnalyzedCount: allRepos.length,
+      originalReposCount: allRepos.filter(repo => !repo.isFork).length,
+      forkedReposCount: allRepos.filter(repo => repo.isFork).length,
+      reposWithDemoCount: allRepos.filter(repo => Boolean(repo.homepage)).length,
       topLanguages,
       recentCommits: recentCommits.slice(0, 15),
       dataSource: config.githubToken ? 'github-api-authenticated' : 'github-api-unauthenticated'

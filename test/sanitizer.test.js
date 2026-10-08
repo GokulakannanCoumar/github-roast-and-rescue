@@ -1,7 +1,7 @@
 // test/sanitizer.test.js - Unit tests for input validation and prompt sanitization
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
-const { validateGitHubUsername, sanitizeForPrompt, wrapUntrustedData } = require('../src/services/sanitizer');
+const { validateGitHubUsername, sanitizeForPrompt, wrapUntrustedData, normalizeProfileData } = require('../src/services/sanitizer');
 
 describe('Sanitizer & Validation Service', () => {
   describe('validateGitHubUsername', () => {
@@ -66,7 +66,38 @@ describe('Sanitizer & Validation Service', () => {
     });
   });
 
-  describe('wrapUntrustedData', () => {
+  describe('normalizeProfileData', () => {
+    it('rejects non-object or invalid profile payloads', () => {
+      assert.strictEqual(normalizeProfileData(null).valid, false);
+      assert.strictEqual(normalizeProfileData({ username: 'bad--name' }).valid, false);
+    });
+
+    it('bounds repositories, commits, and text before prompt generation', () => {
+      const result = normalizeProfileData({
+        username: 'dev-user',
+        name: 'A'.repeat(200),
+        bio: 'B'.repeat(500),
+        publicRepos: 42,
+        repos: Array.from({ length: 40 }, (_, i) => ({
+          name: 'repo-' + i,
+          description: 'x'.repeat(500),
+          language: 'JavaScript',
+          stars: 2,
+          forks: 1
+        })),
+        recentCommits: Array.from({ length: 30 }, () => 'fix bug')
+      });
+
+      assert.strictEqual(result.valid, true);
+      assert.strictEqual(result.profile.repos.length, 15);
+      assert.strictEqual(result.profile.recentCommits.length, 15);
+      assert.ok(result.profile.name.length <= 103);
+      assert.ok(result.profile.bio.length <= 323);
+      assert.ok(result.profile.repos[0].description.length <= 123);
+    });
+  });
+
+  describe('wrapUntrustedData', () =>
     it('wraps content in explicit untrusted tags', () => {
       const wrapped = wrapUntrustedData('bio', 'Looking for jobs');
       assert.ok(wrapped.startsWith('<untrusted_bio>'));

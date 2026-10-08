@@ -1082,3 +1082,45 @@ body {
 .hidden {
   display: none !important;
 }
+/* Accessibility & Keyboard Navigation Styles */
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 20px;
+  background: var(--google-blue);
+  color: #fff;
+  padding: 10px 16px;
+  z-index: 9999;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 20px;
+  outline: 3px solid #79c0ff;
+}
+
+:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Tab Keyboard focus states */
+.tab-btn:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: -2px;
+}

@@ -1,4 +1,5 @@
 // app.js - Frontend application logic for GitHub Roast & Rescue
+// Enhanced with full keyboard accessibility (a11y), Profile README generator, and resilient fallback handling
 
 document.addEventListener('DOMContentLoaded', () => {
   // Elements
@@ -43,18 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const resScoreBar = document.getElementById('resScoreBar');
   const resOneLiner = document.getElementById('resOneLiner');
 
-  // Tab 1
+  // Tab 1: Roast
   const resRepoSins = document.getElementById('resRepoSins');
   const resCommitRoast = document.getElementById('resCommitRoast');
   const resProfileIllusions = document.getElementById('resProfileIllusions');
 
-  // Tab 2
+  // Tab 2: Recruiter Check
   const resVerdict = document.getElementById('resVerdict');
   const resRecruiterScan = document.getElementById('resRecruiterScan');
   const resRedFlags = document.getElementById('resRedFlags');
   const resGreenFlags = document.getElementById('resGreenFlags');
 
-  // Tab 3
+  // Tab 3: Rescue Blueprint
   const resPinRepos = document.getElementById('resPinRepos');
   const resArchiveRepos = document.getElementById('resArchiveRepos');
   const resUpgradeTitle = document.getElementById('resUpgradeTitle');
@@ -62,16 +63,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const resUpgradeSteps = document.getElementById('resUpgradeSteps');
   const resOptimizedBio = document.getElementById('resOptimizedBio');
 
-  // Tab 4
+  // Tab 4: Flagship README
   const resReadmeCode = document.getElementById('resReadmeCode');
 
-  // Tabs
-  const tabButtons = document.querySelectorAll('.tab-btn');
+  // Tab 5: Profile README
+  const resProfileReadmeCode = document.getElementById('resProfileReadmeCode');
+
+  // Tabs & Navigation
+  const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
   const tabPanels = document.querySelectorAll('.tab-panel');
 
   // Copy buttons & Toast
   const copyBioBtn = document.getElementById('copyBioBtn');
   const copyReadmeBtn = document.getElementById('copyReadmeBtn');
+  const copyProfileReadmeBtn = document.getElementById('copyProfileReadmeBtn');
   const copyShareBtn = document.getElementById('copyShareBtn');
   const toast = document.getElementById('toast');
 
@@ -94,23 +99,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   updateApiKeyLabel();
 
-  // Spiciness toggle
+  // Spiciness toggle with a11y aria-pressed update
   spiceButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      spiceButtons.forEach(b => b.classList.remove('active'));
+      spiceButtons.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       currentSpiciness = btn.dataset.spice;
     });
   });
 
-  // API Key Modal Handlers
-  apiKeyBtn.addEventListener('click', () => {
+  // Modal Handlers & Focus Management
+  function openApiKeyModal() {
     apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
     apiKeyModal.classList.remove('hidden');
-  });
+    apiKeyInput.focus();
+  }
 
-  closeModalBtn.addEventListener('click', () => {
+  function closeApiKeyModal() {
     apiKeyModal.classList.add('hidden');
+    apiKeyBtn.focus();
+  }
+
+  apiKeyBtn.addEventListener('click', openApiKeyModal);
+  closeModalBtn.addEventListener('click', closeApiKeyModal);
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !apiKeyModal.classList.contains('hidden')) {
+      closeApiKeyModal();
+    }
   });
 
   saveKeyBtn.addEventListener('click', () => {
@@ -122,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('gemini_api_key');
     }
     updateApiKeyLabel();
-    apiKeyModal.classList.add('hidden');
+    closeApiKeyModal();
   });
 
   clearKeyBtn.addEventListener('click', () => {
@@ -130,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     apiKeyInput.value = '';
     updateApiKeyLabel();
     showToast('Gemini API Key cleared.');
-    apiKeyModal.classList.add('hidden');
+    closeApiKeyModal();
   });
 
   // Close Error Banner
@@ -138,15 +159,44 @@ document.addEventListener('DOMContentLoaded', () => {
     errorBanner.classList.add('hidden');
   });
 
-  // Tab switching
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabButtons.forEach(b => b.classList.remove('active'));
-      tabPanels.forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      const targetPanel = document.getElementById(btn.dataset.tab);
-      if (targetPanel) {
-        targetPanel.classList.add('active');
+  // Tab switching with WCAG ARIA attributes & keyboard arrow navigation
+  function switchTab(targetBtn) {
+    tabButtons.forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+      b.setAttribute('tabindex', '-1');
+    });
+    tabPanels.forEach(p => p.classList.remove('active'));
+
+    targetBtn.classList.add('active');
+    targetBtn.setAttribute('aria-selected', 'true');
+    targetBtn.setAttribute('tabindex', '0');
+    targetBtn.focus();
+
+    const targetPanel = document.getElementById(targetBtn.dataset.tab);
+    if (targetPanel) {
+      targetPanel.classList.add('active');
+    }
+  }
+
+  tabButtons.forEach((btn, index) => {
+    btn.addEventListener('click', () => switchTab(btn));
+
+    btn.addEventListener('keydown', (e) => {
+      let targetIndex = null;
+      if (e.key === 'ArrowRight') {
+        targetIndex = (index + 1) % tabButtons.length;
+      } else if (e.key === 'ArrowLeft') {
+        targetIndex = (index - 1 + tabButtons.length) % tabButtons.length;
+      } else if (e.key === 'Home') {
+        targetIndex = 0;
+      } else if (e.key === 'End') {
+        targetIndex = tabButtons.length - 1;
+      }
+
+      if (targetIndex !== null) {
+        e.preventDefault();
+        switchTab(tabButtons[targetIndex]);
       }
     });
   });
@@ -171,9 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Form submit
   roastForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = usernameInput.value.trim().replace(/^@/, '');
-    if (!username) return;
-    executeRoast(username);
+    const rawVal = usernameInput.value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/^@/, '');
+    const cleanUsername = rawVal.split('/')[0].trim();
+    if (!cleanUsername) return;
+    executeRoast(cleanUsername);
   });
 
   // Dynamic loading messages
@@ -270,11 +321,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Scroll to results smoothly
       resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      resultsSection.focus();
 
     } catch (err) {
       console.error(err);
       showError(err.message || 'Something went wrong during evaluation.');
     }
+  }
+
+  // Generates a complete GitHub Profile README (username/username)
+  function generateProfileReadme(profile, roast) {
+    const username = profile.username || 'developer';
+    const name = profile.name || username;
+    const topLangs = profile.topLanguages || ['JavaScript', 'TypeScript'];
+    const pinned = roast.rescue?.pinRepos || [];
+    const bio = roast.rescue?.optimizedBio || profile.bio || 'Building reliable software systems.';
+
+    const techBadges = topLangs.map(l => {
+      const slug = encodeURIComponent(l.toLowerCase());
+      return `![${l}](https://img.shields.io/badge/-${encodeURIComponent(l)}-333333?style=flat-square&logo=${slug})`;
+    }).join(' ');
+
+    return `# Hi there, I'm ${name} 👋
+
+> ${bio}
+
+---
+
+### 🚀 Highlights & Pinned Work
+${pinned.map(p => `- ⭐️ [**${p}**](https://github.com/${username}/${p}) — Featured flagship project with production demo.`).join('\n')}
+
+### 🛠️ Tech Stack & Languages
+${techBadges || '![Tech](https://img.shields.io/badge/-Modern_Web_Stack-blue?style=flat-square)'}
+
+### 📊 GitHub Telemetry
+<p align="left">
+  <img src="https://github-readme-stats.vercel.app/api?username=${username}&show_icons=true&theme=tokyonight&hide_border=true" alt="${username}'s GitHub stats" height="150" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact&theme=tokyonight&hide_border=true" alt="Top Languages" height="150" />
+</p>
+
+---
+📫 **Connect with me:** [GitHub Profile](https://github.com/${username})
+`;
   }
 
   // Render Result Dossier
@@ -370,8 +458,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     resOptimizedBio.textContent = roast.rescue?.optimizedBio || 'Passionate software engineer building production-grade web systems.';
 
-    // Tab 4: README template
+    // Tab 4: Flagship README template
     resReadmeCode.textContent = roast.rescue?.readmeTemplate || `# ${targetRepo}\n\nProject documentation and live setup.`;
+
+    // Tab 5: Profile README template
+    if (resProfileReadmeCode) {
+      resProfileReadmeCode.textContent = generateProfileReadme(profile, roast);
+    }
   }
 
   // Copy handlers
@@ -388,6 +481,15 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Rescue README.md copied to clipboard!');
     });
   });
+
+  if (copyProfileReadmeBtn) {
+    copyProfileReadmeBtn.addEventListener('click', () => {
+      if (!resProfileReadmeCode?.textContent) return;
+      navigator.clipboard.writeText(resProfileReadmeCode.textContent).then(() => {
+        showToast('Profile README.md copied to clipboard!');
+      });
+    });
+  }
 
   copyShareBtn.addEventListener('click', () => {
     if (!currentRoastData || !currentProfileData) return;

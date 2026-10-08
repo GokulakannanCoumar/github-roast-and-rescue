@@ -2,6 +2,9 @@
 const config = require('../config');
 const { buildSystemPrompt, buildUserPrompt } = require('../prompts/masterPrompts');
 const { generateSmartAnalysis } = require('./fallbackEngine');
+const { ANALYSIS_RESPONSE_SCHEMA, validateAnalysis } = require('./analysisSchema');
+const { normalizeProfileData } = require('./sanitizer');
+const crypto = require('node:crypto');
 
 // In-memory cache for AI analysis results (keyed by username + spiciness + model)
 // TTL: 5 minutes. Prevents duplicate LLM calls while ensuring spiciness level changes yield fresh outputs.
@@ -53,13 +56,26 @@ function cleanAndParseJson(text) {
  * @returns {Promise<{ result: object, source: string, model?: string, notice?: string }>}
  */
 async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey = '') {
-  const username = (profileData.username || '').toLowerCase();
+  const normalized = normalizeProfileData(profileData);
+  if (!normalized.valid) {
+    const error = new Error(normalized.error || 'Invalid profile data.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const safeProfile = normalized.profile;
   const modelName = config.geminiModel;
+  const profileFingerprint = crypto
+    .createHash('sha256')
+    .update(JSON.stringify(safeProfile))
+    .digest('hex')
+    .slice(0, 16);
+  const cacheKey = `ai_${profileFingerprint}_${spiciness}_${modelName}`;
 
-  // Issue 9: Cache key strictly composed of username + spiciness + model
-  const cacheKey = `ai_${username}_${spiciness}_${modelName}`;
+  const activeKey = typeof clientApiKey === 'string' ? clientApiKey.trim().slice(0, 256) : '';
+  const cacheable = !activeKey || Boolean(config.geminiApiKey);
 
-  if (aiAnalysisCache.has(cacheKey)) {
+  if (cacheable && aiAnalysisCache.has(cacheKey)) {
     const cached = aiAnalysisCache.get(cacheKey);
     if (Date.now() - cached.timestamp < AI_CACHE_TTL_MS) {
       return {
@@ -70,11 +86,12 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     aiAnalysisCache.delete(cacheKey);
   }
 
-  const activeKey = clientApiKey || config.geminiApiKey;
+  const serverKey = config.geminiApiKey;
+  const effectiveKey = activeKey || serverKey;
 
   // If no API key is provided, execute Smart Heuristic Engine immediately
   if (!activeKey) {
-    const fallbackResult = generateSmartAnalysis(profileData, spiciness);
+    const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
     const payload = {
       result: fallbackResult,
       source: 'smart-heuristic-engine',
@@ -87,7 +104,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
   const systemPrompt = buildSystemPrompt(spiciness);
   const userPrompt = buildUserPrompt(profileData);
 
-  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(activeKey)}`;
+  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`;
   const temperature = spiciness === 'nuclear' ? 1.0 : spiciness === 'mild' ? 0.35 : 0.7;
 
   const requestBody = {
@@ -107,9 +124,10 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     }
   };
 
+  let timeoutId;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 seconds max for Gemini
+    timeoutId = setTimeout(() => controller.abort(), 12000); // 12 seconds max for Gemini
 
     const response = await fetch(geminiEndpoint, {
       method: 'POST',
@@ -140,17 +158,24 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     }
 
     const parsedJson = cleanAndParseJson(candidateText);
+    const validation = validateAnalysis(parsedJson, safeProfile);
+    if (!validation.valid) {
+      throw new Error('Gemini response failed schema validation: ' + validation.errors.slice(0, 3).join('; '));
+    }
+
     const payload = {
       result: parsedJson,
       source: 'gemini-ai',
       model: modelName
     };
 
-    // Store in AI output cache
-    aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
+    if (cacheable) {
+      aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
+    }
     return payload;
   } catch (err) {
-    console.warn('[GeminiService] Inference error, engaging fallback:', err.message);
+    if (timeoutId) clearTimeout(timeoutId);
+    console.warn('[GeminiService] Inference error, engaging fallback.');
     const fallbackResult = generateSmartAnalysis(profileData, spiciness);
     return {
       result: fallbackResult,

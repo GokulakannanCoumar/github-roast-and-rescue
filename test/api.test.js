@@ -95,4 +95,27 @@ describe('API Endpoints Integration', () => {
     assert.ok(body.result.rescue);
     assert.ok(body.source);
   });
+  it('API responses include hardened security headers', async () => {
+    const res = await fetch(`${baseUrl}/api/health`);
+    assert.strictEqual(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.strictEqual(res.headers.get('x-frame-options'), 'DENY');
+    assert.strictEqual(res.headers.get('cross-origin-opener-policy'), 'same-origin');
+    assert.ok(res.headers.get('content-security-policy'));
+  });
+
+  it('POST /api/roast rejects a structurally invalid profile payload', async () => {
+    const res = await fetch(`${baseUrl}/api/roast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profileData: { username: 'bad--username', repos: [] }
+      })
+    });
+
+    assert.strictEqual(res.status, 400);
+    const body = await res.json();
+    assert.strictEqual(body.success, false);
+    assert.match(body.error, /Invalid GitHub username/i);
+  });
+
 });

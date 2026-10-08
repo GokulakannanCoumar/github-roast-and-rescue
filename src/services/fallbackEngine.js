@@ -103,8 +103,9 @@ function calculateRecruiterScore(profileData, repos) {
   const forkRatio = clamp(forked / analyzedCount, 0, 1);
 
   let score = 4.0;
-  score += originalRatio * 2.0;
-  score += demoRatio * 2.2;
+  score += originalRatio * 2.5;
+  score += demoRatio * 3.0;
+  score += demos > 0 ? 0.5 : 0;
   score += Math.min(commits / 10, 1) * 0.8;
   score += profileData.bio && profileData.bio.trim() ? 0.35 : 0;
   score += Math.min(Math.log10(followers + 1), 2) * 0.3;

@@ -73,7 +73,9 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
   const cacheKey = `ai_${profileFingerprint}_${spiciness}_${modelName}`;
 
   const activeKey = typeof clientApiKey === 'string' ? clientApiKey.trim().slice(0, 256) : '';
-  const cacheable = !activeKey || Boolean(config.geminiApiKey);
+  const serverKey = config.geminiApiKey;
+  const effectiveKey = serverKey || activeKey;
+  const cacheable = Boolean(serverKey) || !effectiveKey;
 
   if (cacheable && aiAnalysisCache.has(cacheKey)) {
     const cached = aiAnalysisCache.get(cacheKey);
@@ -86,23 +88,20 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     aiAnalysisCache.delete(cacheKey);
   }
 
-  const serverKey = config.geminiApiKey;
-  const effectiveKey = activeKey || serverKey;
-
-  // If no API key is provided, execute Smart Heuristic Engine immediately
-  if (!activeKey) {
+  // If no API key is available, execute the deterministic Smart Heuristic Engine.
+  if (!effectiveKey) {
     const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
     const payload = {
       result: fallbackResult,
       source: 'smart-heuristic-engine',
-      notice: 'Evaluated with Smart Heuristic Engine. Add a Google Gemini API Key for live AI inference.'
+      notice: 'Evaluated with the deterministic fallback engine. Configure a server or session Gemini key for live model inference.'
     };
     aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
     return payload;
   }
 
   const systemPrompt = buildSystemPrompt(spiciness);
-  const userPrompt = buildUserPrompt(profileData);
+  const userPrompt = buildUserPrompt(safeProfile);
 
   const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`;
   const temperature = spiciness === 'nuclear' ? 1.0 : spiciness === 'mild' ? 0.35 : 0.7;
@@ -119,8 +118,10 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     ],
     generationConfig: {
       response_mime_type: 'application/json',
+      response_schema: ANALYSIS_RESPONSE_SCHEMA,
       temperature,
-      topP: 0.95
+      topP: 0.9,
+      maxOutputTokens: 1800
     }
   };
 
@@ -146,7 +147,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
       return {
         result: fallbackResult,
         source: 'smart-heuristic-engine',
-        notice: `Gemini API returned status ${response.status}. Evaluated with Smart Heuristic Engine.`
+        notice: 'Gemini inference was unavailable, so the deterministic fallback engine was used.'
       };
     }
 
@@ -180,7 +181,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     return {
       result: fallbackResult,
       source: 'smart-heuristic-engine',
-      notice: `Fallback engaged (${err.message}). Evaluated with Smart Heuristic Engine.`
+      notice: 'Gemini inference could not be completed, so the deterministic fallback engine was used.'
     };
   }
 }

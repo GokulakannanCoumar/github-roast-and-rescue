@@ -195,6 +195,11 @@ function generateSmartAnalysis(profileData, spiciness = 'medium') {
     ranked.length > 3 ? ranked.length + ' repositories were analyzed; curation matters because the strongest project should be obvious immediately.' : ''
   ];
 
+  const normalizedGreenFlags = dedupe(greenFlags);
+  if (normalizedGreenFlags.length === 0) {
+    normalizedGreenFlags.push('The available telemetry is limited; add a clear original project and recent public activity to create stronger evidence.');
+  }
+
   const liveDemo = ranked.find(repo => repo.homepage)?.homepage || '';
   const readmeDemoLine = liveDemo ? '🔗 **Live Demo:** ' + liveDemo : '🔗 **Live Demo:** Add the production URL here.';
   const actionSteps = level.steps.map(step => step.replace('flagship project', '"' + strongestRepo + '"'));

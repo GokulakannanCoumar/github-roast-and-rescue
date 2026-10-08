@@ -17,7 +17,7 @@
 > *Your mission: build something that looks at a real GitHub profile and tells its owner the truth, in a way they will actually listen to."*
 
 **GitHub Roast and Rescue** addresses this challenge through a four-part workflow:
-1. **Live GitHub Telemetry Ingestion**: Fetches repositories, commit history, fork-to-original ratios, live deployment URLs, and bio data via the GitHub REST API. If the Events API returns trimmed commit payloads, it queries the user's top public repositories directly for genuine commit messages.
+1. **Live GitHub Telemetry Ingestion**: Fetches a bounded set of public profile, repository, and recent-event signals through the GitHub REST API, with a public-page fallback when the API is rate-limited. Repository metrics are explicitly scoped to the analyzed sample so the AI does not confuse sampled telemetry with a complete account history.
 2. **Honest Roast (Funny Without Being Cruel)**: 3 calibrated spiciness tiers (Mild Mentor, Sarcastic Tech Lead, Gordon Ramsay of Git) that critique developer hygiene, empty repos, and commit habits while strictly respecting personal dignity and identity.
 3. **The 30-Second Recruiter X-Ray**: Simulates what an engineering hiring manager notices during a quick initial scan (first-impression score, hiring verdict, Red Flags, and Green Flags).
 4. **Actionable Rescue Blueprint**: Provides practical portfolio triage (projects to pin vs. archive/delete), a 3-step technical upgrade roadmap for their flagship project, a recruiter-optimized bio, and an auto-generated GitHub Profile README (`username/README.md`).
@@ -71,10 +71,10 @@ flowchart TD
 
 | Engineering Area | Architectural Decision & Implementation | File References |
 | :--- | :--- | :--- |
-| **Code Structure & Quality** | Modular organization with explicit separation of concerns, single-responsibility services, standard JSDoc typing, centralized configuration, and zero unneeded runtime dependencies. | [`src/config.js`](src/config.js), [`src/services/`](src/services/), [`server.js`](server.js) |
-| **Security & Privacy** | Strict username regex (`/^[a-zA-Z0-9](?:[a-zA-Z0-9]\|-(?=[a-zA-Z0-9])){0,38}$/`), prompt-injection token stripping, XML sandboxing (`<untrusted_*>` tags), HTTP security headers (`CSP`, `nosniff`, `DENY`), and sliding-window rate limiting (45 req/min) with `trust proxy` enabled for Cloud Run. | [`src/services/sanitizer.js`](src/services/sanitizer.js), [`src/middleware/security.js`](src/middleware/security.js) |
-| **Efficiency & Latency** | Parallelized GitHub API calls (`Promise.allSettled` with `AbortController` 6s timeout), dual-level in-memory TTL caching (GitHub raw profiles by username; AI outputs by username + spiciness + model). | [`src/services/githubService.js`](src/services/githubService.js), [`src/services/geminiService.js`](src/services/geminiService.js) |
-| **Automated Testing** | **29 unit and integration tests across 12 suites** covering API routes, security headers, proxy resolution, rate limiters, prompt builders, fallback engine, and input sanitizers. Verified via `npm test` and GitHub Actions CI. | [`test/`](test/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **Code Structure & Quality** | Modular services, bounded API contracts, shared AI response schema, deterministic fallback scoring, centralized configuration, explicit error handling, and environment-driven deployment settings. | [`src/config.js`](src/config.js), [`src/services/`](src/services/), [`server.js`](server.js) |
+| **Security & Privacy** | Strict username validation, bounded profile normalization, prompt-injection token stripping, untrusted-data delimiters, modern HTTP security headers, same-origin CORS by default, no-store API responses, and sliding-window rate limiting with Cloud Run proxy awareness. | [`src/services/sanitizer.js`](src/services/sanitizer.js), [`src/middleware/security.js`](src/middleware/security.js) |
+| **Efficiency & Latency** | Bounded telemetry payloads, parallel GitHub requests with `AbortController` timeouts, TTL caching, and profile fingerprints that invalidate stale AI results when telemetry changes. | [`src/services/githubService.js`](src/services/githubService.js), [`src/services/geminiService.js`](src/services/geminiService.js) |
+| **Automated Testing** | **35 unit and integration tests** covering API routes, security headers, rate limiting, prompt contracts, schema validation, fallback scoring, profile normalization, and prompt-injection defenses. Verified via `npm test` and GitHub Actions CI. | [`test/`](test/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | **Accessibility (a11y)** | Follows WCAG 2.1 AA accessibility guidelines: skip-to-content navigation, ARIA tab roles (`role="tablist"`, `role="tab"`), arrow-key tab switching, focus trapping on dialogs, and screen reader announcements (`aria-live="polite"`). | [`public/index.html`](public/index.html), [`public/app.js`](public/app.js), [`public/style.css`](public/style.css) |
 | **Problem Statement Alignment** | Fully addresses every prompt requirement: real public data analysis, honest humor without cruelty across 3 spiciness levels, 30-second recruiter reality check, and actionable rescue tooling. | [`src/prompts/masterPrompts.js`](src/prompts/masterPrompts.js), [`src/services/fallbackEngine.js`](src/services/fallbackEngine.js) |
 
@@ -82,9 +82,9 @@ flowchart TD
 
 ## 🔒 API Key & Security Model
 
-- **Zero-Persistence Browser Keys:** Client-provided Gemini API keys are held strictly in local browser `localStorage`.
-- **Per-Request Transmission:** Keys are sent per-request in the JSON body over HTTPS.
-- **No Server Logging or Storage:** Keys are never logged to console or stdout, never persisted to server storage or databases, and never included in cache keys.
+- **Session-Scoped Browser Keys:** Client-provided Gemini API keys are held in browser `sessionStorage` and are cleared when the browser session ends.
+- **Per-Request Transmission:** Keys are sent only with the analysis request over HTTPS and are never included in server cache keys.
+- **No Server Logging or Storage:** Keys are never intentionally persisted to server storage or databases. When a visitor supplies their own session key, that result is not cached unless a server-managed key is configured.
 - **Reverse Proxy Compatibility:** `app.set('trust proxy', 1)` is enabled in `server.js` so Cloud Run and reverse proxy IP headers (`X-Forwarded-For`) are properly mapped per client.
 
 ---
@@ -153,9 +153,10 @@ Outputs:
 ✔ API Endpoints Integration (4 tests)
 ✔ Smart Heuristic Fallback Engine (5 tests)
 ✔ Master Prompt Engineering (8 tests)
-✔ Sanitizer & Validation Service (9 tests)
+✔ Sanitizer & Validation Service (11 tests)
 ✔ Security Middleware (3 tests)
-ℹ tests 29 | suites 12 | pass 29 | fail 0
+✔ Analysis Response Contract (4 tests)
+ℹ tests 35 | suites 13 | pass 35 | fail 0
 ```
 
 ### 4. Launch Application

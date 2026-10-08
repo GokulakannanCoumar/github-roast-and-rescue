@@ -9,14 +9,14 @@ describe('Master Prompt Engineering', () => {
       const prompt = buildSystemPrompt('mild');
       assert.ok(prompt.includes('Senior Engineering Mentor'));
       assert.ok(prompt.includes('empathic') || prompt.includes('empathetic') || prompt.includes('Warm'));
-      assert.ok(prompt.includes('JSON OUTPUT SCHEMA'));
+      assert.ok(prompt.includes('JSON OUTPUT CONTRACT'));
     });
 
     it('injects Silicon Valley tech lead tone for medium spiciness', () => {
       const prompt = buildSystemPrompt('medium');
       assert.ok(prompt.includes('Silicon Valley Tech Lead'));
       assert.ok(prompt.includes('Sarcastic, witty'));
-      assert.ok(prompt.includes('JSON OUTPUT SCHEMA'));
+      assert.ok(prompt.includes('JSON OUTPUT CONTRACT'));
     });
 
     it('injects Gordon Ramsay comedic tone for nuclear spiciness', () => {

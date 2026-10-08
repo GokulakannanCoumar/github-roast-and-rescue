@@ -8,20 +8,24 @@ const { securityHeaders, rateLimiter } = require('./src/middleware/security');
 const { notFoundHandler, errorHandler } = require('./src/middleware/errorHandler');
 const githubService = require('./src/services/githubService');
 const geminiService = require('./src/services/geminiService');
-const { validateGitHubUsername } = require('./src/services/sanitizer');
+const { validateGitHubUsername, normalizeProfileData } = require('./src/services/sanitizer');
 const { getDemoProfile } = require('./src/services/demoProfiles');
 
 const app = express();
+app.disable('x-powered-by');
 
-// Enable trust proxy for Cloud Run and reverse proxies (Issue 5)
+// Enable trust proxy for Cloud Run and reverse proxies.
 app.set('trust proxy', 1);
 
 // 1. Security & Core Middleware
 app.use(securityHeaders);
 app.use(cors({
-  origin: '*',
+  // The app is same-origin by default. Set CORS_ORIGIN only when a separate
+  // frontend origin is intentionally deployed.
+  origin: config.corsOrigin || false,
   methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400
 }));
 app.use(express.json({ limit: '512kb' }));
 
@@ -71,9 +75,13 @@ app.get('/api/github/:username', async (req, res, next) => {
     }
 
     const demoProfile = getDemoProfile(validation.sanitized);
-    if (demoProfile) return res.json(demoProfile);
+    if (demoProfile) {
+      res.setHeader('Cache-Control', 'private, no-store');
+      return res.json(demoProfile);
+    }
 
     const data = await githubService.getUserData(validation.sanitized);
+    res.setHeader('Cache-Control', 'private, no-store');
     res.json(data);
   } catch (err) {
     next(err);
@@ -86,20 +94,34 @@ app.get('/api/github/:username', async (req, res, next) => {
  */
 app.post('/api/roast', async (req, res, next) => {
   try {
-    const { profileData, spiciness = 'medium', apiKey: clientKey } = req.body;
+    const {
+      profileData,
+      spiciness = 'medium',
+      apiKey: rawClientKey
+    } = req.body;
 
-    if (!profileData || typeof profileData !== 'object' || !profileData.username) {
+    const normalized = normalizeProfileData(profileData);
+    if (!normalized.valid) {
       return res.status(400).json({
         success: false,
-        error: 'Valid profileData object containing username is required.'
+        error: normalized.error
       });
     }
 
-    // Validate spiciness
-    const validSpiciness = ['mild', 'medium', 'nuclear'].includes(spiciness) ? spiciness : 'medium';
+    const validSpiciness = ['mild', 'medium', 'nuclear'].includes(spiciness)
+      ? spiciness
+      : 'medium';
+    const clientKey = typeof rawClientKey === 'string'
+      ? rawClientKey.trim().slice(0, 256)
+      : '';
 
-    const analysis = await geminiService.generateAnalysis(profileData, validSpiciness, clientKey);
+    const analysis = await geminiService.generateAnalysis(
+      normalized.profile,
+      validSpiciness,
+      clientKey
+    );
 
+    res.setHeader('Cache-Control', 'private, no-store');
     res.json({
       success: true,
       ...analysis

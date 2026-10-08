@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Roast & Rescue 🔥 | Google Build with AI</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar / Header -->
+    <header class="navbar">
+      <div class="brand">
+        <span class="brand-icon">🔥</span>
+        <div class="brand-text">
+          <h1>GitHub Roast & Rescue</h1>
+          <span class="badge google-badge">Google Build with AI • Prompt Wars</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button id="apiKeyBtn" class="btn btn-secondary btn-sm" title="Configure Gemini API Key">
+          <span class="icon">🔑</span> <span id="apiKeyLabel">Gemini API Key</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero / Problem Statement Banner -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <h2 class="hero-title">Give a messy GitHub profile the <span class="highlight-fire">honest feedback</span> it deserves.</h2>
+        <p class="hero-subtitle">
+          Student profiles are often empty, messy, or packed with abandoned tutorial clones.
+          We roast your developer hygiene, give you the brutal <strong>30-second recruiter reality check</strong>, and deliver a rescue blueprint to get hired.
+        </p>
+
+        <!-- Search & Control Box -->
+        <div class="search-card">
+          <form id="roastForm" class="search-form">
+            <div class="input-wrapper">
+              <span class="input-prefix">github.com/</span>
+              <input type="text" id="usernameInput" placeholder="username (e.g. alex-codes)" required autocomplete="off">
+            </div>
+
+            <!-- Spiciness Selector -->
+            <div class="spiciness-group">
+              <span class="spiciness-label">Roast Level:</span>
+              <div class="spiciness-buttons">
+                <button type="button" class="spice-btn" data-spice="mild">
+                  <span class="spice-emoji">🌶️</span>
+                  <span>Mild</span>
+                </button>
+                <button type="button" class="spice-btn active" data-spice="medium">
+                  <span class="spice-emoji">🌶️🌶️</span>
+                  <span>Medium</span>
+                </button>
+                <button type="button" class="spice-btn" data-spice="nuclear">
+                  <span class="spice-emoji">🌶️🌶️🌶️</span>
+                  <span>Nuclear</span>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-primary btn-roast">
+              <span>Roast & Rescue</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </form>
+
+          <!-- Quick Test Presets -->
+          <div class="presets-row">
+            <span class="presets-label">⚡ Try Real Archetypes:</span>
+            <button class="preset-pill" data-preset="tutorial-hoarder">🎓 The Tutorial Hoarder</button>
+            <button class="preset-pill" data-preset="ghost-committer">👻 The Ghost Committer</button>
+            <button class="preset-pill" data-preset="framework-hopper">⚡ The Framework Hopper</button>
+            <button class="preset-pill" data-username="octocat">🐙 octocat</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <section id="loadingSection" class="loading-section hidden">
+      <div class="loading-card">
+        <div class="flame-animation">🔥</div>
+        <h3 id="loadingStatusText">Analyzing GitHub commits...</h3>
+        <p id="loadingSubtext">Checking if your repositories have actual code or just Create-React-App boilerplate...</p>
+        <div class="progress-bar">
+          <div id="progressBarFill" class="progress-fill"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Banner -->
+    <div id="errorBanner" class="error-banner hidden">
+      <span class="error-icon">⚠️</span>
+      <span id="errorMessage">User not found</span>
+      <button id="closeErrorBtn" class="btn-close">✕</button>
+    </div>
+
+    <!-- Results Section -->
+    <main id="resultsSection" class="results-section hidden">
+      <!-- Profile Header Dossier -->
+      <div class="profile-header-card">
+        <div class="profile-main">
+          <img id="resAvatar" src="" alt="Avatar" class="avatar-img">
+          <div class="profile-info">
+            <div class="profile-title-row">
+              <h2 id="resName">Alex Rivera</h2>
+              <a id="resUsernameLink" href="#" target="_blank" class="github-handle">@username</a>
+              <span id="resArchetype" class="archetype-pill">The Tutorial Graveyard Architect</span>
+            </div>
+            <p id="resBio" class="bio-text">"Aspiring engineer..."</p>
+            <div class="quick-stats-row">
+              <span class="stat-tag"><strong id="statRepos">0</strong> Repos</span>
+              <span class="stat-tag"><strong id="statForks">0</strong> Forks</span>
+              <span class="stat-tag"><strong id="statDemos">0</strong> Live Demos</span>
+              <span class="stat-tag"><strong id="statFollowers">0</strong> Followers</span>
+              <span class="stat-tag" id="statLangTag">Top: JS, Python</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade & Score Badge -->
+        <div class="profile-score-box">
+          <div class="grade-display">
+            <span class="score-label">Portfolio Grade</span>
+            <div id="resGrade" class="grade-circle grade-c">C+</div>
+          </div>
+          <div class="recruiter-gauge">
+            <span class="gauge-label">Recruiter 30s Score</span>
+            <div class="gauge-value"><span id="resScore">4.2</span><span class="max-score">/10</span></div>
+            <div class="gauge-bar">
+              <div id="resScoreBar" class="gauge-fill" style="width: 42%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Viral One-Liner Box -->
+      <div class="oneliner-banner">
+        <span class="quote-mark">“</span>
+        <span id="resOneLiner">A cemetery of half-baked tutorial repos where Git commits go to die.</span>
+        <span class="quote-mark">”</span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="roast-tab">
+          <span>🔥</span> The Roast
+        </button>
+        <button class="tab-btn" data-tab="recruiter-tab">
+          <span>⏱️</span> 30-Sec Recruiter Check
+        </button>
+        <button class="tab-btn" data-tab="rescue-tab">
+          <span>🛟</span> The Rescue Blueprint
+        </button>
+        <button class="tab-btn" data-tab="readme-tab">
+          <span>📄</span> Rescue README.md
+        </button>
+      </div>
+
+      <!-- Tab Content 1: The Roast -->
+      <div id="roast-tab" class="tab-panel active">
+        <div class="roast-grid">
+          <div class="roast-card">
+            <div class="roast-card-header">
+              <span class="card-icon">🗂️</span>
+              <h3>Repo Naming & Concept Sins</h3>
+            </div>
+            <ul id="resRepoSins" class="roast-list">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+
+          <div class="roast-card">
+            <div class="roast-card-header">
+              <span class="card-icon">💻</span>
+              <h3>Commit Message Confessions</h3>
+            </div>
+            <div class="terminal-box">
+              <div class="terminal-bar">
+                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                <span class="terminal-title">git log --pretty=oneline</span>
+              </div>
+              <p id="resCommitRoast" class="terminal-content">
+                "Commit messages like 'fixed bug' tell an emotional story of zero code reviews."
+              </p>
+            </div>
+          </div>
+
+          <div class="roast-card">
+            <div class="roast-card-header">
+              <span class="card-icon">🎭</span>
+              <h3>The Portfolio Illusions</h3>
+            </div>
+            <p id="resProfileIllusions" class="illusion-text">
+              "Bio claims Senior AI Architect while 90% of repos are fork-and-forget."
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Recruiter Reality Check -->
+      <div id="recruiter-tab" class="tab-panel">
+        <div class="recruiter-container">
+          <!-- 30-Second Verdict Banner -->
+          <div class="verdict-banner">
+            <div class="verdict-header">
+              <span class="verdict-tag">HIRING MANAGER 30-SECOND VERDICT</span>
+              <h3 id="resVerdict">Borderline - Needs Severe Polish</h3>
+            </div>
+            <p id="resRecruiterScan" class="verdict-desc">
+              "A recruiter will look at your profile for 15 seconds, look for a live portfolio URL, see zero deployed apps, and move to candidate #42."
+            </p>
+          </div>
+
+          <!-- Red Flags vs Green Flags Grid -->
+          <div class="flags-grid">
+            <div class="flags-card red-flags">
+              <div class="flags-header">
+                <span class="flag-icon">🚩</span>
+                <h3>Immediate Red Flags</h3>
+              </div>
+              <ul id="resRedFlags" class="flags-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+
+            <div class="flags-card green-flags">
+              <div class="flags-header">
+                <span class="flag-icon">🟢</span>
+                <h3>Hidden Gems & Positive Signals</h3>
+              </div>
+              <ul id="resGreenFlags" class="flags-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content 3: The Rescue Blueprint -->
+      <div id="rescue-tab" class="tab-panel">
+        <div class="rescue-container">
+          <!-- Repo Triage -->
+          <div class="triage-row">
+            <div class="triage-card pin-card">
+              <div class="triage-header">
+                <span class="triage-icon">📌</span>
+                <h4>Pin & Showcase These</h4>
+              </div>
+              <p class="triage-sub">Keep these 2-3 repositories visible on your profile header.</p>
+              <div id="resPinRepos" class="repo-tag-container">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <div class="triage-card archive-card">
+              <div class="triage-header">
+                <span class="triage-icon">📦</span>
+                <h4>Archive or Make Private</h4>
+              </div>
+              <p class="triage-sub">Hide course homework, clone repos, and dead prototypes.</p>
+              <div id="resArchiveRepos" class="repo-tag-container">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+          <!-- High-Impact Project Upgrade Roadmap -->
+          <div class="project-makeover-card">
+            <div class="makeover-header">
+              <span class="makeover-icon">🚀</span>
+              <div>
+                <h3 id="resUpgradeTitle">Makeover Blueprint: target-repo</h3>
+                <p id="resUpgradeRationale" class="makeover-rationale">Turn your highest-potential project into an interview magnet.</p>
+              </div>
+            </div>
+            <ol id="resUpgradeSteps" class="steps-list">
+              <!-- Dynamically populated -->
+            </ol>
+          </div>
+
+          <!-- Optimized Bio Copy-Paste Box -->
+          <div class="bio-rescue-card">
+            <div class="bio-rescue-header">
+              <span class="icon">✍️</span>
+              <h4>Copy-Paste Ready Bio (Recruiter Optimized)</h4>
+              <button id="copyBioBtn" class="btn btn-sm btn-outline">
+                <span class="copy-icon">📋</span> Copy Bio
+              </button>
+            </div>
+            <blockquote id="resOptimizedBio" class="optimized-bio-text">
+              "Full-Stack Developer building production-grade web systems..."
+            </blockquote>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content 4: Rescue README.md -->
+      <div id="readme-tab" class="tab-panel">
+        <div class="readme-container">
+          <div class="readme-toolbar">
+            <div class="readme-info">
+              <span class="file-icon">📝</span>
+              <span>Tailored <strong>README.md</strong> for your flagship project</span>
+            </div>
+            <button id="copyReadmeBtn" class="btn btn-sm btn-outline">
+              <span class="copy-icon">📋</span> Copy Markdown
+            </button>
+          </div>
+          <pre class="code-editor"><code id="resReadmeCode"># Project Name...</code></pre>
+        </div>
+      </div>
+
+      <!-- Shareable Report Card / Social Share -->
+      <div class="share-footer-card">
+        <div class="share-content">
+          <h4>Share Your Roast & Rescue Card</h4>
+          <p>Let other developers know they are not alone in tutorial hell.</p>
+        </div>
+        <button id="copyShareBtn" class="btn btn-primary">
+          <span>📤 Copy Share Summary</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Google Gemini API Key</h3>
+          <button id="closeModalBtn" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            Provide your Gemini API key for live inference with <strong>Gemini 2.5 Flash</strong>.
+            Your key stays in your local browser and is never stored permanently.
+          </p>
+          <div class="key-input-row">
+            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+          </div>
+          <div class="modal-links">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">
+              Get a free API key at Google AI Studio ↗
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="clearKeyBtn" class="btn btn-secondary">Remove Key</button>
+          <button id="saveKeyBtn" class="btn btn-primary">Save Key</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">Copied to clipboard!</div>
+  </div>
+
+  <script src="demo-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

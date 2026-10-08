@@ -1,6 +1,8 @@
 # GitHub Roast and Rescue 🔥🛟
 > **Built for Google Build with AI: Prompt Wars**
 
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/GokulakannanCoumar/github-roast-and-rescue.git)
+
 Give messy GitHub profiles the honest feedback they deserve! An interactive AI application that analyzes real public GitHub data, provides a hilarious yet respectful roast, conducts a brutal 30-second recruiter reality check, and generates a concrete portfolio rescue roadmap with ready-to-copy bios and project READMEs.
 
 ---

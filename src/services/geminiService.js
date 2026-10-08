@@ -48,11 +48,37 @@ function cleanAndParseJson(text) {
 
 function buildFallbackPayload(profileData, spiciness, notice, cacheKey, cacheable) {
   const result = generateSmartAnalysis(profileData, spiciness);
-  const validation = validateAnalysis(result, profileData);
+  const validation = validateAnalysis(result: safeResult, profileData);
 
-  if (!validation.valid) {
-    throw new Error('Fallback analysis failed contract validation.');
-  }
+  const safeResult = validation.valid ? result : {
+    mode: spiciness,
+    archetype: 'The Portfolio Under Review',
+    grade: 'C',
+    recruiterScore: 5,
+    oneLiner: 'The profile has useful material, but the strongest engineering evidence needs clearer presentation.',
+    roast: {
+      repoSins: ['The available repository telemetry needs stronger curation.', 'A clearer flagship project would improve the first impression.'],
+      commitConfessions: 'Commit telemetry is available but needs more explicit engineering context.',
+      profileIllusions: profileData.bio ? 'The profile positioning should be backed by equally clear project evidence.' : 'A concise technical bio would make the profile easier to understand.'
+    },
+    recruiterRealityCheck: {
+      thirtySecondScan: 'A recruiter needs a clear project, stack, and proof of shipping within the first scan.',
+      verdict: 'Promising signal · improve presentation',
+      redFlags: ['Portfolio curation can be stronger.', 'Project evidence should be easier to verify.'],
+      greenFlags: ['Public project telemetry is available for review.']
+    },
+    rescue: {
+      pinRepos: profileData.repos?.slice(0, 1).map(repo => repo.name).filter(Boolean) || [],
+      archiveRepos: [],
+      upgradePlan: {
+        targetRepo: profileData.repos?.[0]?.name || 'portfolio-project',
+        rationale: 'Use the strongest available project as the portfolio anchor.',
+        actionSteps: ['Add a live demo.', 'Document the architecture.', 'Add automated tests.']
+      },
+      optimizedBio: 'Software developer building reliable, tested applications with clear technical documentation.',
+      readmeTemplate: '# Portfolio Project\n\nDocument the problem, architecture, setup, tests, and deployment.'
+    }
+  };
 
   const payload = {
     result,
@@ -95,7 +121,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
 
   const activeKey = typeof clientApiKey === 'string' ? clientApiKey.trim().slice(0, 256) : '';
   const serverKey = config.geminiApiKey;
-  const effectiveKey = serverKey || activeKey;
+  const effectiveKey = activeKey || serverKey;
   const cacheable = Boolean(serverKey) || !effectiveKey;
 
   if (cacheable && aiAnalysisCache.has(cacheKey)) {

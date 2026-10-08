@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize API Key state
   function updateApiKeyLabel() {
-    const savedKey = localStorage.getItem('gemini_api_key');
+    const savedKey = sessionStorage.getItem('gemini_api_key');
     if (savedKey) {
       apiKeyLabel.textContent = 'Gemini Key: Active';
       apiKeyBtn.style.borderColor = 'rgba(63, 185, 80, 0.5)';
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Modal Handlers & Focus Management
   function openApiKeyModal() {
-    apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+    apiKeyInput.value = sessionStorage.getItem('gemini_api_key') || '';
     apiKeyModal.classList.remove('hidden');
     apiKeyInput.focus();
   }
@@ -138,17 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
   saveKeyBtn.addEventListener('click', () => {
     const val = apiKeyInput.value.trim();
     if (val) {
-      localStorage.setItem('gemini_api_key', val);
+      sessionStorage.setItem('gemini_api_key', val);
       showToast('Gemini API Key saved!');
     } else {
-      localStorage.removeItem('gemini_api_key');
+      sessionStorage.removeItem('gemini_api_key');
     }
     updateApiKeyLabel();
     closeApiKeyModal();
   });
 
   clearKeyBtn.addEventListener('click', () => {
-    localStorage.removeItem('gemini_api_key');
+    sessionStorage.removeItem('gemini_api_key');
     apiKeyInput.value = '';
     updateApiKeyLabel();
     showToast('Gemini API Key cleared.');
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentProfileData = profileData;
 
       // Call Roast endpoint
-      const apiKey = localStorage.getItem('gemini_api_key') || '';
+      const apiKey = sessionStorage.getItem('gemini_api_key') || '';
       const roastRes = await fetch('/api/roast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

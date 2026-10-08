@@ -4,17 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GitHub Roast & Rescue — Portfolio Intelligence</title>
-  <meta name="description" content="AI-powered GitHub profile reviewer that roasts messy profiles, simulates a 30-second recruiter check, and delivers an actionable portfolio rescue plan.">
-  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="AI-powered GitHub portfolio review with recruiter-focused feedback, roast, rescue plan, and README improvements.">
+  <link rel="stylesheet" href="style.css?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <a href="#resultsSection" class="skip-link">Skip to analysis results</a>
-
   <div class="app-container">
-    <!-- Navbar / Header -->
     <header class="navbar" role="banner">
       <div class="brand">
         <span class="brand-icon" aria-hidden="true">✦</span>
@@ -30,50 +28,35 @@
       </div>
     </header>
 
-    <!-- Hero / Problem Statement Banner -->
     <section class="hero-section" aria-labelledby="heroHeading">
       <div class="hero-content">
         <h2 id="heroHeading" class="hero-title">Your GitHub profile, <span class="highlight-fire">under the microscope.</span></h2>
         <p class="hero-subtitle">
-          Student profiles are often empty, messy, or packed with abandoned tutorial clones.
-          We roast your developer hygiene, give you the brutal <strong>30-second recruiter reality check</strong>, and deliver a rescue blueprint to get hired.
+          Get a sharp, recruiter-minded read on your GitHub. Find weak signals, see what stands out, and leave with a practical plan to make your portfolio stronger.
         </p>
 
-        <!-- Search & Control Box -->
         <div class="search-card">
           <form id="roastForm" class="search-form" role="search">
             <div class="input-wrapper">
               <span class="input-prefix" aria-hidden="true">github.com/</span>
               <label for="usernameInput" class="visually-hidden">GitHub Username</label>
-              <input type="text" id="usernameInput" name="username" aria-label="GitHub Username" placeholder="username (e.g. alex-codes)" required autocomplete="off" autocapitalize="off" spellcheck="false">
+              <input type="text" id="usernameInput" name="username" aria-label="GitHub Username" placeholder="username (e.g. octocat)" required autocomplete="off" autocapitalize="off" spellcheck="false">
             </div>
 
-            <!-- Spiciness Selector -->
             <div class="spiciness-group" role="group" aria-label="Roast spiciness level selector">
-              <span class="spiciness-label">Roast Level:</span>
+              <span class="spiciness-label">Roast level:</span>
               <div class="spiciness-buttons">
-                <button type="button" class="spice-btn" data-spice="mild" aria-pressed="false" aria-label="Mild Roast: Empathetic mentor">
-                  <span class="spice-emoji" aria-hidden="true">🌶️</span>
-                  <span>Mild</span>
-                </button>
-                <button type="button" class="spice-btn active" data-spice="medium" aria-pressed="true" aria-label="Medium Roast: Sarcastic Tech Lead">
-                  <span class="spice-emoji" aria-hidden="true">🌶️🌶️</span>
-                  <span>Medium</span>
-                </button>
-                <button type="button" class="spice-btn" data-spice="nuclear" aria-pressed="false" aria-label="Nuclear Roast: Gordon Ramsay of Git">
-                  <span class="spice-emoji" aria-hidden="true">🌶️🌶️🌶️</span>
-                  <span>Nuclear</span>
-                </button>
+                <button type="button" class="spice-btn" data-spice="mild" aria-pressed="false" aria-label="Mild Roast: Empathetic mentor"><span>Mild</span></button>
+                <button type="button" class="spice-btn active" data-spice="medium" aria-pressed="true" aria-label="Medium Roast: Sarcastic Tech Lead"><span>Medium</span></button>
+                <button type="button" class="spice-btn" data-spice="nuclear" aria-pressed="false" aria-label="Nuclear Roast: Gordon Ramsay of Git"><span>Nuclear</span></button>
               </div>
             </div>
 
             <button type="submit" id="submitBtn" class="btn btn-primary btn-roast" aria-label="Submit profile for Roast and Rescue analysis">
-              <span>Roast & Rescue</span>
-              <span class="btn-arrow" aria-hidden="true">→</span>
+              <span>Roast & Rescue</span><span class="btn-arrow" aria-hidden="true">→</span>
             </button>
           </form>
 
-          <!-- Quick Test Presets -->
           <div class="presets-row" role="region" aria-label="Instant Test Archetype Presets">
             <span class="presets-label">Try an example:</span>
             <button class="preset-pill" data-preset="tutorial-hoarder" aria-label="Test The Tutorial Hoarder archetype">The Tutorial Hoarder</button>
@@ -85,28 +68,22 @@
       </div>
     </section>
 
-    <!-- Loading State -->
     <section id="loadingSection" class="loading-section hidden" aria-live="polite" aria-busy="true" aria-atomic="true">
       <div class="loading-card">
         <div class="flame-animation" aria-hidden="true">🔥</div>
         <h3 id="loadingStatusText">Analyzing GitHub commits...</h3>
-        <p id="loadingSubtext">Checking if your repositories have actual code or just Create-React-App boilerplate...</p>
-        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-          <div id="progressBarFill" class="progress-fill"></div>
-        </div>
+        <p id="loadingSubtext">Checking your repositories and portfolio signals...</p>
+        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div id="progressBarFill" class="progress-fill"></div></div>
       </div>
     </section>
 
-    <!-- Error Banner -->
     <div id="errorBanner" class="error-banner hidden" role="alert" aria-live="assertive">
       <span class="error-icon" aria-hidden="true">⚠️</span>
       <span id="errorMessage">User not found</span>
       <button id="closeErrorBtn" class="btn-close" aria-label="Dismiss error notification">✕</button>
     </div>
 
-    <!-- Results Section -->
     <main id="resultsSection" class="results-section hidden" tabindex="-1">
-      <!-- Profile Header Dossier -->
       <div class="profile-header-card">
         <div class="profile-main">
           <img id="resAvatar" src="" alt="Developer Profile Picture" class="avatar-img">
@@ -128,7 +105,6 @@
           </div>
         </div>
 
-        <!-- Grade & Score Badge -->
         <div class="profile-score-box">
           <div class="grade-display">
             <span class="score-label">Portfolio Grade</span>
@@ -137,257 +113,52 @@
           <div class="recruiter-gauge">
             <span class="gauge-label">Recruiter 30s Score</span>
             <div class="gauge-value"><span id="resScore">4.2</span><span class="max-score">/10</span></div>
-            <div class="gauge-bar" role="meter" aria-label="Recruiter First Impression Score" aria-valuemin="1" aria-valuemax="10" aria-valuenow="4.2">
-              <div id="resScoreBar" class="gauge-fill" style="width: 42%;"></div>
-            </div>
+            <div class="gauge-bar" role="meter" aria-label="Recruiter First Impression Score" aria-valuemin="1" aria-valuemax="10" aria-valuenow="4.2"><div id="resScoreBar" class="gauge-fill" style="width:42%"></div></div>
           </div>
         </div>
       </div>
 
-      <!-- Viral One-Liner Box -->
       <div class="oneliner-banner" role="region" aria-label="Viral Profile Summary">
-        <span class="quote-mark" aria-hidden="true">“</span>
-        <span id="resOneLiner">A cemetery of half-baked tutorial repos where Git commits go to die.</span>
-        <span class="quote-mark" aria-hidden="true">”</span>
+        <span class="quote-mark" aria-hidden="true">“</span><span id="resOneLiner">A cemetery of half-baked tutorial repos where Git commits go to die.</span><span class="quote-mark" aria-hidden="true">”</span>
       </div>
 
-      <!-- Navigation Tabs -->
       <div class="tabs-nav" role="tablist" aria-label="Roast and Rescue Analysis Sections">
-        <button class="tab-btn active" id="tab-roast" role="tab" aria-selected="true" aria-controls="roast-tab" data-tab="roast-tab" tabindex="0">
-          <span aria-hidden="true">🔥</span> The Roast
-        </button>
-        <button class="tab-btn" id="tab-recruiter" role="tab" aria-selected="false" aria-controls="recruiter-tab" data-tab="recruiter-tab" tabindex="-1">
-          <span aria-hidden="true">⏱️</span> 30-Sec Recruiter Check
-        </button>
-        <button class="tab-btn" id="tab-rescue" role="tab" aria-selected="false" aria-controls="rescue-tab" data-tab="rescue-tab" tabindex="-1">
-          <span aria-hidden="true">🛟</span> The Rescue Blueprint
-        </button>
-        <button class="tab-btn" id="tab-readme" role="tab" aria-selected="false" aria-controls="readme-tab" data-tab="readme-tab" tabindex="-1">
-          <span aria-hidden="true">📄</span> Flagship README.md
-        </button>
-        <button class="tab-btn" id="tab-profile-readme" role="tab" aria-selected="false" aria-controls="profile-readme-tab" data-tab="profile-readme-tab" tabindex="-1">
-          <span aria-hidden="true">👤</span> Profile README.md
-        </button>
+        <button class="tab-btn active" id="tab-roast" role="tab" aria-selected="true" aria-controls="roast-tab" data-tab="roast-tab" tabindex="0"><span aria-hidden="true">01</span> The Roast</button>
+        <button class="tab-btn" id="tab-recruiter" role="tab" aria-selected="false" aria-controls="recruiter-tab" data-tab="recruiter-tab" tabindex="-1"><span aria-hidden="true">02</span> Recruiter Check</button>
+        <button class="tab-btn" id="tab-rescue" role="tab" aria-selected="false" aria-controls="rescue-tab" data-tab="rescue-tab" tabindex="-1"><span aria-hidden="true">03</span> Rescue Blueprint</button>
+        <button class="tab-btn" id="tab-readme" role="tab" aria-selected="false" aria-controls="readme-tab" data-tab="readme-tab" tabindex="-1"><span aria-hidden="true">04</span> Project README</button>
+        <button class="tab-btn" id="tab-profile-readme" role="tab" aria-selected="false" aria-controls="profile-readme-tab" data-tab="profile-readme-tab" tabindex="-1"><span aria-hidden="true">05</span> Profile README</button>
       </div>
 
-      <!-- Tab Content 1: The Roast -->
       <div id="roast-tab" class="tab-panel active" role="tabpanel" aria-labelledby="tab-roast" tabindex="0">
         <div class="roast-grid">
-          <div class="roast-card">
-            <div class="roast-card-header">
-              <span class="card-icon" aria-hidden="true">🗂️</span>
-              <h3>Repo Naming & Concept Sins</h3>
-            </div>
-            <ul id="resRepoSins" class="roast-list">
-              <!-- Dynamically populated -->
-            </ul>
-          </div>
-
-          <div class="roast-card">
-            <div class="roast-card-header">
-              <span class="card-icon" aria-hidden="true">💻</span>
-              <h3>Commit Message Confessions</h3>
-            </div>
-            <div class="terminal-box">
-              <div class="terminal-bar">
-                <span class="dot red" aria-hidden="true"></span>
-                <span class="dot yellow" aria-hidden="true"></span>
-                <span class="dot green" aria-hidden="true"></span>
-                <span class="terminal-title">git log --pretty=oneline</span>
-              </div>
-              <p id="resCommitRoast" class="terminal-content">
-                "Commit messages like 'fixed bug' tell an emotional story of zero code reviews."
-              </p>
-            </div>
-          </div>
-
-          <div class="roast-card">
-            <div class="roast-card-header">
-              <span class="card-icon" aria-hidden="true">🎭</span>
-              <h3>The Portfolio Illusions</h3>
-            </div>
-            <p id="resProfileIllusions" class="illusion-text">
-              "Bio claims Senior AI Architect while 90% of repos are fork-and-forget."
-            </p>
-          </div>
+          <div class="roast-card"><div class="roast-card-header"><span class="card-icon" aria-hidden="true">🗂️</span><h3>Repo Naming & Concept Sins</h3></div><ul id="resRepoSins" class="roast-list"></ul></div>
+          <div class="roast-card"><div class="roast-card-header"><span class="card-icon" aria-hidden="true">💻</span><h3>Commit Message Confessions</h3></div><div class="terminal-box"><div class="terminal-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="terminal-title">git log --pretty=oneline</span></div><p id="resCommitRoast" class="terminal-content"></p></div></div>
+          <div class="roast-card"><div class="roast-card-header"><span class="card-icon" aria-hidden="true">🎭</span><h3>The Portfolio Illusions</h3></div><p id="resProfileIllusions" class="illusion-text"></p></div>
         </div>
       </div>
 
-      <!-- Tab Content 2: Recruiter Reality Check -->
       <div id="recruiter-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-recruiter" tabindex="0">
-        <div class="recruiter-container">
-          <!-- 30-Second Verdict Banner -->
-          <div class="verdict-banner">
-            <div class="verdict-header">
-              <span class="verdict-tag">HIRING MANAGER 30-SECOND VERDICT</span>
-              <h3 id="resVerdict">Borderline - Needs Severe Polish</h3>
-            </div>
-            <p id="resRecruiterScan" class="verdict-desc">
-              "A recruiter will look at your profile for 15 seconds, look for a live portfolio URL, see zero deployed apps, and move to candidate #42."
-            </p>
-          </div>
-
-          <!-- Red Flags vs Green Flags Grid -->
-          <div class="flags-grid">
-            <div class="flags-card red-flags">
-              <div class="flags-header">
-                <span class="flag-icon" aria-hidden="true">🚩</span>
-                <h3>Immediate Red Flags</h3>
-              </div>
-              <ul id="resRedFlags" class="flags-list">
-                <!-- Dynamically populated -->
-              </ul>
-            </div>
-
-            <div class="flags-card green-flags">
-              <div class="flags-header">
-                <span class="flag-icon" aria-hidden="true">🟢</span>
-                <h3>Hidden Gems & Positive Signals</h3>
-              </div>
-              <ul id="resGreenFlags" class="flags-list">
-                <!-- Dynamically populated -->
-              </ul>
-            </div>
-          </div>
-        </div>
+        <div class="recruiter-container"><div class="verdict-banner"><div class="verdict-header"><span class="verdict-tag">HIRING MANAGER 30-SECOND VERDICT</span><h3 id="resVerdict">Borderline - Needs Severe Polish</h3></div><p id="resRecruiterScan" class="verdict-desc"></p></div><div class="flags-grid"><div class="flags-card red-flags"><div class="flags-header"><span class="flag-icon">🚩</span><h3>Immediate Red Flags</h3></div><ul id="resRedFlags" class="flags-list"></ul></div><div class="flags-card green-flags"><div class="flags-header"><span class="flag-icon">🟢</span><h3>Hidden Gems & Positive Signals</h3></div><ul id="resGreenFlags" class="flags-list"></ul></div></div></div>
       </div>
 
-      <!-- Tab Content 3: The Rescue Blueprint -->
       <div id="rescue-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-rescue" tabindex="0">
-        <div class="rescue-container">
-          <!-- Repo Triage -->
-          <div class="triage-row">
-            <div class="triage-card pin-card">
-              <div class="triage-header">
-                <span class="triage-icon" aria-hidden="true">📌</span>
-                <h4>Pin & Showcase These</h4>
-              </div>
-              <p class="triage-sub">Keep these 2-3 repositories visible on your profile header.</p>
-              <div id="resPinRepos" class="repo-tag-container">
-                <!-- Dynamically populated -->
-              </div>
-            </div>
-
-            <div class="triage-card archive-card">
-              <div class="triage-header">
-                <span class="triage-icon" aria-hidden="true">📦</span>
-                <h4>Archive or Make Private</h4>
-              </div>
-              <p class="triage-sub">Hide course homework, clone repos, and dead prototypes.</p>
-              <div id="resArchiveRepos" class="repo-tag-container">
-                <!-- Dynamically populated -->
-              </div>
-            </div>
-          </div>
-
-          <!-- High-Impact Project Upgrade Roadmap -->
-          <div class="project-makeover-card">
-            <div class="makeover-header">
-              <span class="makeover-icon" aria-hidden="true">🚀</span>
-              <div>
-                <h3 id="resUpgradeTitle">Makeover Blueprint: target-repo</h3>
-                <p id="resUpgradeRationale" class="makeover-rationale">Turn your highest-potential project into an interview magnet.</p>
-              </div>
-            </div>
-            <ol id="resUpgradeSteps" class="steps-list">
-              <!-- Dynamically populated -->
-            </ol>
-          </div>
-
-          <!-- Optimized Bio Copy-Paste Box -->
-          <div class="bio-rescue-card">
-            <div class="bio-rescue-header">
-              <span class="icon" aria-hidden="true">✍️</span>
-              <h4>Copy-Paste Ready Bio (Recruiter Optimized)</h4>
-              <button id="copyBioBtn" class="btn btn-sm btn-outline" aria-label="Copy optimized bio to clipboard">
-                <span class="copy-icon" aria-hidden="true">📋</span> Copy Bio
-              </button>
-            </div>
-            <blockquote id="resOptimizedBio" class="optimized-bio-text">
-              "Full-Stack Developer building production-grade web systems..."
-            </blockquote>
-          </div>
-        </div>
+        <div class="rescue-container"><div class="triage-row"><div class="triage-card pin-card"><div class="triage-header"><span class="triage-icon">📌</span><h4>Pin & Showcase These</h4></div><p class="triage-sub">Keep these 2–3 repositories visible on your profile header.</p><div id="resPinRepos" class="repo-tag-container"></div></div><div class="triage-card archive-card"><div class="triage-header"><span class="triage-icon">📦</span><h4>Archive or Make Private</h4></div><p class="triage-sub">Hide course work, clone repos, and dead prototypes.</p><div id="resArchiveRepos" class="repo-tag-container"></div></div></div><div class="project-makeover-card"><div class="makeover-header"><span class="makeover-icon">🚀</span><div><h3 id="resUpgradeTitle">Flagship Project Upgrade</h3><p id="resUpgradeRationale" class="makeover-rationale"></p></div></div><ol id="resUpgradeSteps" class="steps-list"></ol></div><div class="bio-rescue-card"><div class="bio-rescue-header"><span class="icon">✍️</span><h4>Copy-Paste Ready Bio</h4><button id="copyBioBtn" class="btn btn-sm btn-outline">Copy Bio</button></div><blockquote id="resOptimizedBio" class="optimized-bio-text"></blockquote></div></div>
       </div>
 
-      <!-- Tab Content 4: Flagship README.md -->
-      <div id="readme-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-readme" tabindex="0">
-        <div class="readme-container">
-          <div class="readme-toolbar">
-            <div class="readme-info">
-              <span class="file-icon" aria-hidden="true">📝</span>
-              <span>Tailored <strong>README.md</strong> for your flagship project</span>
-            </div>
-            <button id="copyReadmeBtn" class="btn btn-sm btn-outline" aria-label="Copy flagship README markdown to clipboard">
-              <span class="copy-icon" aria-hidden="true">📋</span> Copy Markdown
-            </button>
-          </div>
-          <pre class="code-editor"><code id="resReadmeCode"># Project Name...</code></pre>
-        </div>
-      </div>
+      <div id="readme-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-readme" tabindex="0"><div class="readme-container"><div class="readme-toolbar"><div class="readme-info"><span class="file-icon">📝</span><span>Tailored <strong>README.md</strong> for your flagship project</span></div><button id="copyReadmeBtn" class="btn btn-sm btn-outline">Copy Markdown</button></div><pre class="code-editor"><code id="resReadmeCode"># Project Name...</code></pre></div></div>
+      <div id="profile-readme-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-profile-readme" tabindex="0"><div class="readme-container"><div class="readme-toolbar"><div class="readme-info"><span class="file-icon">👤</span><span>Tailored <strong>GitHub Profile README.md</strong></span></div><button id="copyProfileReadmeBtn" class="btn btn-sm btn-outline">Copy Markdown</button></div><pre class="code-editor"><code id="resProfileReadmeCode"># Hi, I'm...</code></pre></div></div>
 
-      <!-- Tab Content 5: Profile README.md -->
-      <div id="profile-readme-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-profile-readme" tabindex="0">
-        <div class="readme-container">
-          <div class="readme-toolbar">
-            <div class="readme-info">
-              <span class="file-icon" aria-hidden="true">👤</span>
-              <span>Tailored <strong>GitHub Profile README.md</strong> (username/username)</span>
-            </div>
-            <button id="copyProfileReadmeBtn" class="btn btn-sm btn-outline" aria-label="Copy profile README markdown to clipboard">
-              <span class="copy-icon" aria-hidden="true">📋</span> Copy Markdown
-            </button>
-          </div>
-          <pre class="code-editor"><code id="resProfileReadmeCode"># Hi, I'm...</code></pre>
-        </div>
-      </div>
-
-      <!-- Shareable Report Card / Social Share -->
-      <div class="share-footer-card">
-        <div class="share-content">
-          <h4>Share Your Roast & Rescue Card</h4>
-          <p>Let other developers know they are not alone in tutorial hell.</p>
-        </div>
-        <button id="copyShareBtn" class="btn btn-primary" aria-label="Copy shareable summary to clipboard for Twitter or LinkedIn">
-          <span>📤 Copy Share Summary</span>
-        </button>
-      </div>
+      <div class="share-footer-card"><div class="share-content"><h4>Share Your Roast & Rescue Card</h4><p>Show other developers what a sharper portfolio review looks like.</p></div><button id="copyShareBtn" class="btn btn-primary">Copy Share Summary</button></div>
     </main>
 
-    <!-- API Key Modal -->
     <div id="apiKeyModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3 id="modalTitle">Google Gemini API Key</h3>
-          <button id="closeModalBtn" class="modal-close" aria-label="Close API Key dialog">✕</button>
-        </div>
-        <div class="modal-body">
-          <p class="modal-desc">
-            Provide your Gemini API key for live inference with <strong>Gemini 2.5 Flash</strong>.
-            Your key stays in your local browser and is never stored permanently.
-          </p>
-          <div class="key-input-row">
-            <label for="apiKeyInput" class="visually-hidden">Gemini API Key</label>
-            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
-          </div>
-          <div class="modal-links">
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
-              Get a free API key at Google AI Studio ↗
-            </a>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="clearKeyBtn" class="btn btn-secondary">Remove Key</button>
-          <button id="saveKeyBtn" class="btn btn-primary">Save Key</button>
-        </div>
-      </div>
+      <div class="modal-card"><div class="modal-header"><h3 id="modalTitle">Google Gemini API Key</h3><button id="closeModalBtn" class="modal-close">✕</button></div><div class="modal-body"><p class="modal-desc">Provide your Gemini API key for live inference. Your key stays in your local browser and is never stored permanently.</p><div class="key-input-row"><label for="apiKeyInput" class="visually-hidden">Gemini API Key</label><input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off"></div><div class="modal-links"><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get a free API key at Google AI Studio ↗</a></div></div><div class="modal-footer"><button id="clearKeyBtn" class="btn btn-secondary">Remove Key</button><button id="saveKeyBtn" class="btn btn-primary">Save Key</button></div></div>
     </div>
-
-    <!-- Notification Toast -->
     <div id="toast" class="toast hidden" role="status" aria-live="polite">Copied to clipboard!</div>
   </div>
 
-  <script src="demo-data.js"></script>
-  <script src="app.js"></script>
+  <script src="demo-data.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

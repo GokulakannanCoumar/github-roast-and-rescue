@@ -64,6 +64,11 @@ function validateAnalysis(analysis, profileData = null) {
     return { valid: false, errors: ['analysis must be an object'] };
   }
 
+  const validGrades = new Set(ANALYSIS_RESPONSE_SCHEMA.properties.grade.enum);
+  if (!validGrades.has(analysis.grade)) {
+    errors.push('grade must be a supported letter grade');
+  }
+
   const requiredStrings = [
     'archetype',
     'grade',
@@ -85,33 +90,23 @@ function validateAnalysis(analysis, profileData = null) {
     }
   }
 
-  if (!Array.isArray(analysis.roast?.repoSins) || analysis.roast.repoSins.length < 2) {
-    errors.push('roast.repoSins must contain at least 2 observations');
-  }
+  const checkStringArray = (value, path, min, max) => {
+    if (!Array.isArray(value) || value.length < min || value.length > max || value.some(item => typeof item !== 'string' || !item.trim())) {
+      errors.push(path + ' must contain ' + min + ' to ' + max + ' non-empty strings');
+    }
+  };
+
+  checkStringArray(analysis.roast?.repoSins, 'roast.repoSins', 2, 4);
 
   if (!Number.isFinite(analysis.recruiterScore) || analysis.recruiterScore < 1 || analysis.recruiterScore > 10) {
     errors.push('recruiterScore must be a number between 1 and 10');
   }
 
-  if (!Array.isArray(analysis.recruiterRealityCheck?.redFlags) || analysis.recruiterRealityCheck.redFlags.length < 2) {
-    errors.push('recruiterRealityCheck.redFlags must contain at least 2 items');
-  }
-
-  if (!Array.isArray(analysis.recruiterRealityCheck?.greenFlags) || analysis.recruiterRealityCheck.greenFlags.length < 1) {
-    errors.push('recruiterRealityCheck.greenFlags must contain at least 1 item');
-  }
-
-  if (!Array.isArray(analysis.rescue?.pinRepos) || analysis.rescue.pinRepos.length < 1 || analysis.rescue.pinRepos.length > 3) {
-    errors.push('rescue.pinRepos must contain 1 to 3 items');
-  }
-
-  if (!Array.isArray(analysis.rescue?.archiveRepos) || analysis.rescue.archiveRepos.length > 5) {
-    errors.push('rescue.archiveRepos must contain at most 5 items');
-  }
-
-  if (!Array.isArray(analysis.rescue?.upgradePlan?.actionSteps) || analysis.rescue.upgradePlan.actionSteps.length < 3) {
-    errors.push('rescue.upgradePlan.actionSteps must contain at least 3 items');
-  }
+  checkStringArray(analysis.recruiterRealityCheck?.redFlags, 'recruiterRealityCheck.redFlags', 2, 5);
+  checkStringArray(analysis.recruiterRealityCheck?.greenFlags, 'recruiterRealityCheck.greenFlags', 1, 5);
+  checkStringArray(analysis.rescue?.pinRepos, 'rescue.pinRepos', 1, 3);
+  checkStringArray(analysis.rescue?.archiveRepos, 'rescue.archiveRepos', 0, 5);
+  checkStringArray(analysis.rescue?.upgradePlan?.actionSteps, 'rescue.upgradePlan.actionSteps', 3, 4);
 
   if (profileData?.repos && Array.isArray(profileData.repos)) {
     const knownRepos = new Set(profileData.repos.map(repo => repo.name).filter(Boolean));

@@ -25,10 +25,16 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '512kb' }));
 
-// 2. Static Assets with Caching
+// 2. Static Assets with safe caching
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: '1h',
-  etag: true
+  etag: true,
+  setHeaders: (res, filePath) => {
+    // HTML should always revalidate so deployments appear immediately.
+    if (path.extname(filePath).toLowerCase() === '.html') {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    }
+  }
 }));
 
 // 3. API Rate Limiting

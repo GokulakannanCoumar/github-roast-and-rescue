@@ -46,6 +46,27 @@ function cleanAndParseJson(text) {
   return JSON.parse(clean);
 }
 
+function buildFallbackPayload(profileData, spiciness, notice, cacheKey, cacheable) {
+  const result = generateSmartAnalysis(profileData, spiciness);
+  const validation = validateAnalysis(result, profileData);
+
+  if (!validation.valid) {
+    throw new Error('Fallback analysis failed contract validation.');
+  }
+
+  const payload = {
+    result,
+    source: 'smart-heuristic-engine',
+    notice
+  };
+
+  if (cacheable) {
+    aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
+  }
+
+  return payload;
+}
+
 /**
  * Generates Roast & Rescue analysis using Gemini 2.5 Flash, or falls back to Smart Heuristic Engine
  * Multi-factor caching: Keyed by username + spiciness + model (Issue 9).
@@ -90,18 +111,13 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
 
   // If no API key is available, execute the deterministic Smart Heuristic Engine.
   if (!effectiveKey) {
-    const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
-    const fallbackValidation = validateAnalysis(fallbackResult, safeProfile);
-    if (!fallbackValidation.valid) {
-      throw new Error('Fallback analysis failed contract validation.');
-    }
-    const payload = {
-      result: fallbackResult,
-      source: 'smart-heuristic-engine',
-      notice: 'Evaluated with the deterministic fallback engine. Configure a server or session Gemini key for live model inference.'
-    };
-    aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
-    return payload;
+    return buildFallbackPayload(
+      safeProfile,
+      spiciness,
+      'Evaluated with the deterministic fallback engine. Configure a server or session Gemini key for live model inference.',
+      cacheKey,
+      true
+    );
   }
 
   const systemPrompt = buildSystemPrompt(spiciness);
@@ -146,13 +162,13 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     if (!response.ok) {
       const errorText = await response.text();
       console.warn(`[GeminiService] API returned ${response.status}: ${errorText.substring(0, 150)}`);
-      // Fallback gracefully so end users and evaluators never encounter a failure
-      const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
-      return {
-        result: fallbackResult,
-        source: 'smart-heuristic-engine',
-        notice: 'Gemini inference was unavailable, so the deterministic fallback engine was used.'
-      };
+      return buildFallbackPayload(
+        safeProfile,
+        spiciness,
+        'Gemini inference was unavailable, so the deterministic fallback engine was used.',
+        cacheKey,
+        cacheable
+      );
     }
 
     const data = await response.json();
@@ -181,12 +197,13 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
   } catch (err) {
     if (timeoutId) clearTimeout(timeoutId);
     console.warn('[GeminiService] Inference error, engaging fallback.');
-    const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
-    return {
-      result: fallbackResult,
-      source: 'smart-heuristic-engine',
-      notice: 'Gemini inference could not be completed, so the deterministic fallback engine was used.'
-    };
+    return buildFallbackPayload(
+      safeProfile,
+      spiciness,
+      'Gemini inference could not be completed, so the deterministic fallback engine was used.',
+      cacheKey,
+      cacheable
+    );
   }
 }
 

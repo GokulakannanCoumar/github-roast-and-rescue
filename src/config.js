@@ -10,7 +10,8 @@ const config = {
   cacheTtlMs: parseInt(process.env.CACHE_TTL_MS, 10) || 1000 * 60 * 60,
   rateLimitWindowMs: 60 * 1000,
   rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX, 10) || 30,
-  githubFetchTimeoutMs: 8000
+  githubFetchTimeoutMs: 8000,
+  corsOrigin: process.env.CORS_ORIGIN || ''
 };
 
 module.exports = config;

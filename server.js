@@ -9,6 +9,7 @@ const { notFoundHandler, errorHandler } = require('./src/middleware/errorHandler
 const githubService = require('./src/services/githubService');
 const geminiService = require('./src/services/geminiService');
 const { validateGitHubUsername } = require('./src/services/sanitizer');
+const { getDemoProfile } = require('./src/services/demoProfiles');
 
 const app = express();
 
@@ -62,6 +63,9 @@ app.get('/api/github/:username', async (req, res, next) => {
         error: validation.error
       });
     }
+
+    const demoProfile = getDemoProfile(validation.sanitized);
+    if (demoProfile) return res.json(demoProfile);
 
     const data = await githubService.getUserData(validation.sanitized);
     res.json(data);

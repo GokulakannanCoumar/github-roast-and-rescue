@@ -50,13 +50,14 @@ describe('Smart Heuristic Fallback Engine', () => {
       publicRepos: 15,
       originalReposCount: 2,
       forkedReposCount: 13,
+      reposAnalyzedCount: 15,
       reposWithDemoCount: 0,
       repos: [{ name: 'linux-fork' }],
       recentCommits: ['sync fork']
     };
 
     const res = generateSmartAnalysis(profile, 'medium');
-    assert.strictEqual(res.archetype, 'The Professional Forker');
+    assert.ok(res.archetype.startsWith('The Professional Forker'));
     assert.ok(res.recruiterScore < 4.0);
   });
 
@@ -72,7 +73,7 @@ describe('Smart Heuristic Fallback Engine', () => {
     };
 
     const res = generateSmartAnalysis(profile, 'medium');
-    assert.strictEqual(res.archetype, 'The Ghost Committer');
+    assert.ok(res.archetype.startsWith('The Ghost Committer'));
   });
 
   it('accurately identifies The Diamond in the Rough when demos exist', () => {
@@ -82,12 +83,13 @@ describe('Smart Heuristic Fallback Engine', () => {
       originalReposCount: 10,
       forkedReposCount: 2,
       reposWithDemoCount: 4,
+      reposAnalyzedCount: 12,
       repos: [{ name: 'saas-starter' }, { name: 'ai-agent' }],
       recentCommits: ['feat: add stripe checkout']
     };
 
     const res = generateSmartAnalysis(profile, 'medium');
-    assert.strictEqual(res.archetype, 'The Diamond in the Rough');
+    assert.ok(res.archetype.startsWith('The Diamond in the Rough'));
     assert.ok(res.recruiterScore >= 7.0);
   });
 
@@ -99,9 +101,13 @@ describe('Smart Heuristic Fallback Engine', () => {
     };
 
     const mild = generateSmartAnalysis(profile, 'mild');
+    const medium = generateSmartAnalysis(profile, 'medium');
     const nuclear = generateSmartAnalysis(profile, 'nuclear');
 
-    assert.ok(mild.roast.repoSins[0].includes('dilutes your genuine technical talent'));
-    assert.ok(nuclear.roast.repoSins[0].includes('absolute technical crime scene'));
+    assert.notStrictEqual(mild.mode, medium.mode);
+    assert.notStrictEqual(medium.mode, nuclear.mode);
+    assert.ok(mild.archetype.includes('Mentor Review'));
+    assert.ok(medium.archetype.includes('Tech Lead Review'));
+    assert.ok(nuclear.archetype.includes('Brutal Roast'));
   });
 });

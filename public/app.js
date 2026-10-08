@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resName = document.getElementById('resName');
   const resUsernameLink = document.getElementById('resUsernameLink');
   const resArchetype = document.getElementById('resArchetype');
+  const resEngineBadge = document.getElementById('resEngineBadge');
   const resBio = document.getElementById('resBio');
   const statRepos = document.getElementById('statRepos');
   const statForks = document.getElementById('statForks');
@@ -315,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const responsePayload = await roastRes.json();
       currentRoastData = responsePayload.result;
 
-      renderResults(profileData, currentRoastData);
+      renderResults(profileData, currentRoastData, responsePayload.source);
       stopLoading();
       resultsSection.classList.remove('hidden');
 
@@ -366,7 +367,20 @@ ${techBadges || '![Tech](https://img.shields.io/badge/-Modern_Web_Stack-blue?sty
   }
 
   // Render Result Dossier
-  function renderResults(profile, roast) {
+  function renderResults(profile, roast, source = 'smart-heuristic-engine') {
+    // Engine source badge
+    if (resEngineBadge) {
+      if (source === 'gemini-ai') {
+        resEngineBadge.textContent = '✨ Gemini 2.5 Flash';
+        resEngineBadge.className = 'engine-badge engine-gemini';
+        resEngineBadge.setAttribute('aria-label', 'Evaluated with Google Gemini 2.5 Flash');
+      } else {
+        resEngineBadge.textContent = '⚡ Offline Heuristic';
+        resEngineBadge.className = 'engine-badge engine-offline';
+        resEngineBadge.setAttribute('aria-label', 'Evaluated with Offline Heuristic Engine');
+      }
+    }
+
     // Profile info
     resAvatar.src = profile.avatarUrl || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
     resName.textContent = profile.name || profile.username;

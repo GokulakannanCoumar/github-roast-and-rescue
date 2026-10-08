@@ -67,7 +67,7 @@ flowchart TD
 
 ---
 
-## 📐 Architectural Decisions & Implementation Highlights
+## 📐 Design Decisions
 
 | Engineering Area | Architectural Decision & Implementation | File References |
 | :--- | :--- | :--- |

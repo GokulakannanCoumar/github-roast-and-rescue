@@ -39,6 +39,7 @@ function securityHeaders(req, res, next) {
 
 /**
  * Middleware: Rate limiter for API routes
+ * Handles reverse proxy IP resolution (Cloud Run / load balancers)
  */
 function rateLimiter(req, res, next) {
   // Do not rate-limit health check or static files
@@ -46,9 +47,15 @@ function rateLimiter(req, res, next) {
     return next();
   }
 
-  const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
-  const now = Date.now();
+  // Safe client IP resolution behind Cloud Run / reverse proxies
+  const headers = req.headers || {};
+  const xForwardedFor = headers['x-forwarded-for'];
+  const clientIp = req.ip ||
+    (typeof xForwardedFor === 'string' ? xForwardedFor.split(',')[0].trim() : null) ||
+    (req.socket ? req.socket.remoteAddress : null) ||
+    'unknown-ip';
 
+  const now = Date.now();
   const record = ipRequests.get(clientIp);
 
   if (!record || now - record.startTime > config.rateLimitWindowMs) {

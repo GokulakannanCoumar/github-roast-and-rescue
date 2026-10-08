@@ -1,7 +1,12 @@
-// src/services/geminiService.js - Google Gemini 2.5 Flash client with resilient fallback handling
+// src/services/geminiService.js - Google Gemini 2.5 Flash client with resilient fallback handling & level-aware caching
 const config = require('../config');
 const { buildSystemPrompt, buildUserPrompt } = require('../prompts/masterPrompts');
 const { generateSmartAnalysis } = require('./fallbackEngine');
+
+// In-memory cache for AI analysis results (keyed by username + spiciness + model)
+// TTL: 5 minutes. Prevents duplicate LLM calls while ensuring spiciness level changes yield fresh outputs.
+const aiAnalysisCache = new Map();
+const AI_CACHE_TTL_MS = 1000 * 60 * 5;
 
 /**
  * Safely parses and validates LLM response JSON
@@ -40,33 +45,52 @@ function cleanAndParseJson(text) {
 
 /**
  * Generates Roast & Rescue analysis using Gemini 2.5 Flash, or falls back to Smart Heuristic Engine
+ * Multi-factor caching: Keyed by username + spiciness + model (Issue 9).
+ * Client API Key is sent over HTTPS, never logged to stdout, and never put in cache keys (Issue 8).
  * @param {object} profileData
  * @param {'mild'|'medium'|'nuclear'} spiciness
  * @param {string} [clientApiKey]
  * @returns {Promise<{ result: object, source: string, model?: string, notice?: string }>}
  */
 async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey = '') {
+  const username = (profileData.username || '').toLowerCase();
+  const modelName = config.geminiModel;
+
+  // Issue 9: Cache key strictly composed of username + spiciness + model
+  const cacheKey = `ai_${username}_${spiciness}_${modelName}`;
+
+  if (aiAnalysisCache.has(cacheKey)) {
+    const cached = aiAnalysisCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < AI_CACHE_TTL_MS) {
+      return {
+        ...cached.payload,
+        cached: true
+      };
+    }
+    aiAnalysisCache.delete(cacheKey);
+  }
+
   const activeKey = clientApiKey || config.geminiApiKey;
 
   // If no API key is provided, execute Smart Heuristic Engine immediately
   if (!activeKey) {
     const fallbackResult = generateSmartAnalysis(profileData, spiciness);
-    return {
+    const payload = {
       result: fallbackResult,
       source: 'smart-heuristic-engine',
       notice: 'Evaluated with Smart Heuristic Engine. Add a Google Gemini API Key for live AI inference.'
     };
+    aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
+    return payload;
   }
 
   const systemPrompt = buildSystemPrompt(spiciness);
   const userPrompt = buildUserPrompt(profileData);
-  const modelName = config.geminiModel;
 
   const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(activeKey)}`;
-
   const temperature = spiciness === 'nuclear' ? 1.0 : spiciness === 'mild' ? 0.35 : 0.7;
 
-  const payload = {
+  const requestBody = {
     system_instruction: {
       parts: [{ text: systemPrompt }]
     },
@@ -90,7 +114,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     const response = await fetch(geminiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestBody),
       signal: controller.signal
     });
 
@@ -116,12 +140,15 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
     }
 
     const parsedJson = cleanAndParseJson(candidateText);
-
-    return {
+    const payload = {
       result: parsedJson,
       source: 'gemini-ai',
       model: modelName
     };
+
+    // Store in AI output cache
+    aiAnalysisCache.set(cacheKey, { timestamp: Date.now(), payload });
+    return payload;
   } catch (err) {
     console.warn('[GeminiService] Inference error, engaging fallback:', err.message);
     const fallbackResult = generateSmartAnalysis(profileData, spiciness);
@@ -133,7 +160,12 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
   }
 }
 
+function _clearAiCache() {
+  aiAnalysisCache.clear();
+}
+
 module.exports = {
   generateAnalysis,
-  cleanAndParseJson
+  cleanAndParseJson,
+  _clearAiCache
 };

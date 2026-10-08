@@ -1,4 +1,4 @@
-// src/services/githubService.js - High-efficiency GitHub API client with parallelization & TTL caching
+// src/services/githubService.js - High-efficiency GitHub API client with parallelization, direct commit fallback & TTL caching
 const config = require('../config');
 const { validateGitHubUsername } = require('./sanitizer');
 
@@ -69,7 +69,7 @@ class GitHubService {
     const username = validation.sanitized;
     const cacheKey = `gh_${username.toLowerCase()}`;
 
-    // Check cache
+    // Check cache for raw GitHub profile data
     if (this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < config.cacheTtlMs) {
@@ -140,14 +140,16 @@ class GitHubService {
               for (const c of evt.payload.commits) {
                 if (c && c.message) {
                   const firstLine = c.message.trim().split('\n')[0];
-                  if (firstLine) recentCommits.push(firstLine);
+                  if (firstLine && !recentCommits.includes(firstLine)) {
+                    recentCommits.push(firstLine);
+                  }
                 }
               }
             }
           }
         }
       } catch (e) {
-        // Non-critical; fallback to empty commits
+        // Non-critical; continue to direct commit lookup if empty
       }
     }
 
@@ -162,8 +164,35 @@ class GitHubService {
       isFork: Boolean(r.fork),
       homepage: r.homepage || '',
       updatedAt: r.updated_at ? r.updated_at.split('T')[0] : 'Unknown',
-      hasReadme: true // GitHub repo default assumption for public profiles
+      hasReadme: true
     }));
+
+    // Issue 6: If Events API returned trimmed/empty commit messages, fetch commits directly from top 3 public repos
+    if (recentCommits.length < 3 && repos.length > 0) {
+      const topOriginalRepos = repos.filter(r => !r.isFork).slice(0, 3);
+      const commitFetches = topOriginalRepos.map(r =>
+        this._fetchWithTimeout(`https://api.github.com/repos/${encodedUser}/${encodeURIComponent(r.name)}/commits?per_page=5`)
+      );
+
+      const commitResults = await Promise.allSettled(commitFetches);
+      for (const cr of commitResults) {
+        if (cr.status === 'fulfilled' && cr.value.ok) {
+          try {
+            const repoCommits = await cr.value.json();
+            if (Array.isArray(repoCommits)) {
+              for (const item of repoCommits) {
+                const msg = item.commit?.message?.trim()?.split('\n')[0];
+                if (msg && !recentCommits.includes(msg)) {
+                  recentCommits.push(msg);
+                }
+              }
+            }
+          } catch (e) {
+            // Graceful fallback
+          }
+        }
+      }
+    }
 
     // Calculate Top Languages
     const langCounts = {};
@@ -203,7 +232,7 @@ class GitHubService {
       recentCommits: recentCommits.slice(0, 15)
     };
 
-    // Store in cache
+    // Store in cache (cache raw GitHub data by username)
     this.cache.set(cacheKey, { timestamp: Date.now(), data: profileSummary });
 
     return profileSummary;

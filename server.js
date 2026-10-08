@@ -12,6 +12,9 @@ const { validateGitHubUsername } = require('./src/services/sanitizer');
 
 const app = express();
 
+// Enable trust proxy for Cloud Run and reverse proxies (Issue 5)
+app.set('trust proxy', 1);
+
 // 1. Security & Core Middleware
 app.use(securityHeaders);
 app.use(cors({
@@ -69,6 +72,7 @@ app.get('/api/github/:username', async (req, res, next) => {
 
 /**
  * Generate Roast, Recruiter Check, and Rescue Roadmap
+ * Supports level-aware caching & privacy-first API keys (Issues 8 & 9)
  */
 app.post('/api/roast', async (req, res, next) => {
   try {

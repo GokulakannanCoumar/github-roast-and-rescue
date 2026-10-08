@@ -7,10 +7,10 @@ const config = {
   githubToken: process.env.GITHUB_TOKEN || '',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-  cacheTtlMs: parseInt(process.env.CACHE_TTL_MS, 10) || 1000 * 60 * 10, // 10 minutes default
-  rateLimitWindowMs: 60 * 1000, // 1 minute
-  rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX, 10) || 45, // 45 reqs per minute
-  githubFetchTimeoutMs: 6000 // 6 seconds timeout for GitHub API calls
+  cacheTtlMs: parseInt(process.env.CACHE_TTL_MS, 10) || 1000 * 60 * 60,
+  rateLimitWindowMs: 60 * 1000,
+  rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX, 10) || 30,
+  githubFetchTimeoutMs: 8000
 };
 
 module.exports = config;

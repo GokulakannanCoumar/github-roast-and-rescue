@@ -74,7 +74,7 @@ flowchart TD
 | **Code Structure & Quality** | Modular services, bounded API contracts, shared AI response schema, deterministic fallback scoring, centralized configuration, explicit error handling, and environment-driven deployment settings. | [`src/config.js`](src/config.js), [`src/services/`](src/services/), [`server.js`](server.js) |
 | **Security & Privacy** | Strict username validation, bounded profile normalization, prompt-injection token stripping, untrusted-data delimiters, modern HTTP security headers, same-origin CORS by default, no-store API responses, and sliding-window rate limiting with Cloud Run proxy awareness. | [`src/services/sanitizer.js`](src/services/sanitizer.js), [`src/middleware/security.js`](src/middleware/security.js) |
 | **Efficiency & Latency** | Bounded telemetry payloads, parallel GitHub requests with `AbortController` timeouts, TTL caching, and profile fingerprints that invalidate stale AI results when telemetry changes. | [`src/services/githubService.js`](src/services/githubService.js), [`src/services/geminiService.js`](src/services/geminiService.js) |
-| **Automated Testing** | **35 unit and integration tests** covering API routes, security headers, rate limiting, prompt contracts, schema validation, fallback scoring, profile normalization, and prompt-injection defenses. Verified via `npm test` and GitHub Actions CI. | [`test/`](test/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **Automated Testing** | **37 unit and integration tests** covering API routes, security headers, rate limiting, prompt contracts, schema validation, fallback scoring, profile normalization, and prompt-injection defenses. Verified via `npm test` and GitHub Actions CI. | [`test/`](test/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | **Accessibility (a11y)** | Follows WCAG 2.1 AA accessibility guidelines: skip-to-content navigation, ARIA tab roles (`role="tablist"`, `role="tab"`), arrow-key tab switching, focus trapping on dialogs, and screen reader announcements (`aria-live="polite"`). | [`public/index.html`](public/index.html), [`public/app.js`](public/app.js), [`public/style.css`](public/style.css) |
 | **Problem Statement Alignment** | Fully addresses every prompt requirement: real public data analysis, honest humor without cruelty across 3 spiciness levels, 30-second recruiter reality check, and actionable rescue tooling. | [`src/prompts/masterPrompts.js`](src/prompts/masterPrompts.js), [`src/services/fallbackEngine.js`](src/services/fallbackEngine.js) |
 
@@ -156,7 +156,7 @@ Outputs:
 ✔ Sanitizer & Validation Service (11 tests)
 ✔ Security Middleware (3 tests)
 ✔ Analysis Response Contract (4 tests)
-ℹ tests 35 | suites 13 | pass 35 | fail 0
+ℹ tests 37 | suites 13 | pass 37 | fail 0
 ```
 
 ### 4. Launch Application

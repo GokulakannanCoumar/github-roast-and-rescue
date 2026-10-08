@@ -45,44 +45,88 @@ function generateSmartAnalysis(profileData, spiciness = 'medium') {
     oneLiner = `Actually deploys real software, but buries their masterpieces under 12 unarchived homework repos.`;
   }
 
-  // Adjust tone intensity based on spiciness
-  let repoSin1 = `Looking at repositories like "${repoNames.slice(0, 2).join('", "') || 'unnamed projects'}": you spin up new repositories with intense optimism, then abandon them the moment CSS flexbox becomes difficult.`;
-  let commitRoast = commits.length > 0
-    ? `Commit history highlights like "${commits[0]}" prove you treat Git like an autosave key in a frantic video game.`
-    : `No recent public commits found. Your Git graph has fewer green squares than a lunar surface photograph.`;
+  // Each roast level intentionally changes the copy strategy so the result is clearly different.
+  const level = spiciness === 'mild' ? 'mild' : spiciness === 'nuclear' ? 'nuclear' : 'medium';
+  const levelConfig = {
+    mild: {
+      suffix: ' · Mentor Review',
+      prefix: 'Constructive reality check: ',
+      repo: `There is good experimentation in "${repoNames.slice(0, 2).join('", "') || 'your projects'}", but the profile would look stronger with tighter curation and clearer proof of what you can ship.`,
+      commit: commits.length > 0
+        ? `"${commits[0]}" is a normal quick-build commit, but clearer Conventional Commit messages would make the history easier for other engineers to trust.`
+        : `Your recent public activity is quiet. A small, consistent shipping rhythm would make the profile feel more current.`,
+      profile: hasBio
+        ? `Your bio says "${profileData.bio}" — now let the repositories underneath it clearly prove those claims.`
+        : `Your profile has no bio yet. Two focused sentences about what you build would immediately improve the first impression.`,
+      verdict: recruiterScore => recruiterScore >= 6 ? 'Promising profile · polish the presentation' : 'Worth a second look after portfolio cleanup',
+      scan: 'The biggest win is reducing noise and making your best work easier to verify quickly.',
+      rationale: 'Use the strongest existing project as a polished portfolio anchor, then remove distractions around it.',
+      steps: [
+        'Choose one flagship project and give it a clear live demo, screenshots, and a concise README.',
+        'Archive or hide repetitive tutorial work so the strongest repositories become immediately visible.',
+        'Standardize commit messages and add a short architecture section explaining the important technical choices.'
+      ]
+    },
+    medium: {
+      suffix: ' · Tech Lead Review',
+      prefix: 'No sugar-coating: ',
+      repo: `Repositories like "${repoNames.slice(0, 2).join('", "') || 'your projects'}" show plenty of enthusiasm, but not enough ruthless curation. The recruiter should not have to do archaeology to find the good work.`,
+      commit: commits.length > 0
+        ? `"${commits[0]}" reads less like engineering history and more like a save button with feelings. Make your Git history tell a clearer story.`
+        : `Your contribution history is giving abandoned-side-project energy. Consistent shipping beats a profile full of promises.`,
+      profile: hasBio
+        ? `Your bio says "${profileData.bio}" — bold pitch. Now the repos need to provide receipts instead of vibes.`
+        : `No bio means you are wasting one of the few places where you can explain your engineering direction before a recruiter starts clicking.`,
+      verdict: recruiterScore => recruiterScore >= 6 ? 'Good signal · portfolio needs sharper positioning' : 'Likely passed over until the portfolio is cleaned up',
+      scan: 'A recruiter is scanning for a clear stack, credible projects, and evidence that something actually ships. The signal is there, but the noise is louder than it should be.',
+      rationale: 'Turn the strongest repository into a proof-of-work project and aggressively remove portfolio noise.',
+      steps: [
+        'Deploy the flagship project and put the live URL directly in the repo metadata and README header.',
+        'Archive obvious coursework, clones, and abandoned experiments that dilute the first impression.',
+        'Add architecture, tests, screenshots, and measurable outcomes so the project reads like production work.'
+      ]
+    },
+    nuclear: {
+      suffix: ' · Brutal Roast',
+      prefix: 'Nuclear verdict: ',
+      repo: `"${repoNames.slice(0, 2).join('", "') || 'these repos'}" looks like the opening scene of a repository disaster movie. You do not have a project-count problem; you have a finishing-and-deleting problem.`,
+      commit: commits.length > 0
+        ? `"${commits[0]}" is not a commit message; it is a cry for help from the timeline. Stop documenting panic-pushes and start documenting engineering decisions.`
+        : `No recent public commits. The contribution graph is so quiet it looks like GitHub forgot to send the memo that you exist.`,
+      profile: hasBio
+        ? `Your bio claims "${profileData.bio}" while the portfolio underneath it is doing its best impression of unfinished homework. You need finishing and deleting, not another framework.`
+        : `No bio, no positioning, and a pile of repositories. Right now the profile is making recruiters do unpaid investigative journalism.`,
+      verdict: recruiterScore => recruiterScore >= 6 ? 'Strong raw material · brutally under-presented' : 'Hard pass right now · rebuild the portfolio signal first',
+      scan: 'A recruiter will not excavate a noisy profile looking for hidden talent. If the best project is buried, the next candidate gets the click.',
+      rationale: 'Perform a portfolio hard reset: keep the best work, aggressively remove noise, then make the flagship project impossible to misunderstand.',
+      steps: [
+        'Archive the weakest noise and pin only the two repositories you would defend in an interview today.',
+        'Ship a real production demo with screenshots, CI, tests, and a clear architecture explanation.',
+        'Rewrite the README around outcomes, trade-offs, engineering decisions, and proof — not generic feature lists.'
+      ]
+    }
+  }[level];
 
-  if (spiciness === 'nuclear') {
-    repoSin1 = `Looking at "${repoNames.slice(0, 2).join('", "') || 'these repos'}": it is an absolute technical crime scene. You start projects faster than a microwave meal, yet finish them at the glacial pace of continental drift.`;
-    commitRoast = commits.length > 0
-      ? `Commit messages like "${commits[0]}": Absolutely scandalous! No tickets, no descriptions, just pure chaos pushed straight to main.`
-      : `Zero public commit pulse. A digital ghost town with cobwebs on the push button.`;
-  } else if (spiciness === 'mild') {
-    repoSin1 = `You have clearly built exciting experiments like "${repoNames.slice(0, 2).join('", "') || 'your projects'}", but keeping them all uncurated dilutes your genuine technical talent.`;
-    commitRoast = commits.length > 0
-      ? `Recent commit notes like "${commits[0]}" are common during quick prototyping, but standardizing on Conventional Commits will instantly impress hiring leads.`
-      : `Activity is quiet recently; a regular weekly contribution rhythm will boost visibility.`;
-  }
+  let repoSin1 = levelConfig.repo;
+  let commitRoast = levelConfig.commit;
 
   return {
-    archetype,
+    mode: levelConfig.suffix.replace(' · Mentor Review','').replace(' · Tech Lead Review','').replace(' · Brutal Roast',''),
+    archetype: archetype + levelConfig.suffix,
     grade,
     recruiterScore,
-    oneLiner,
+    oneLiner: levelConfig.prefix + oneLiner,
     roast: {
       repoSins: [
         repoSin1,
         `Out of ${profileData.publicRepos || 0} repositories, exactly ${reposWithDemo} have live demo URLs. Tech recruiters will never clone your repository, fight with your Node version, and pray your local database seeds.`
       ],
       commitConfessions: commitRoast,
-      profileIllusions: hasBio
-        ? `Bio proclaims: "${profileData.bio}" — bold claims for a profile where half the repos consist of default template code and zero test suites.`
-        : `Empty bio detected. You are treating your primary public developer storefront like an anonymous burner account.`
+      profileIllusions: levelConfig.profile
     },
     recruiterRealityCheck: {
-      thirtySecondScan: `A senior engineering recruiter reviews your profile for roughly 15 seconds. If they don't see a live link or clear architecture within two clicks, they immediately move to the next applicant.`,
-      verdict: recruiterScore >= 6.0
-        ? 'High Potential - Immediately Viable With Portfolio Triage'
-        : 'Immediate Candidate Pass - Requires Urgent Portfolio Cleanup',
+      thirtySecondScan: levelConfig.scan,
+      verdict: levelConfig.verdict(recruiterScore),
       redFlags: [
         `Demo Deficiency: ${reposWithDemo === 0 ? 'Zero live application URLs across all repositories.' : 'Only ' + reposWithDemo + ' projects have clickable live demonstrations.'}`,
         `Repository Clutter: ${profileData.publicRepos || 0} total repos creates noise; recruiters cannot discern which projects reflect your true capability.`,
@@ -98,12 +142,8 @@ function generateSmartAnalysis(profileData, spiciness = 'medium') {
       archiveRepos: repoNames.slice(2, 5).length > 0 ? repoNames.slice(2, 5) : ['old-coursework-1', 'tutorial-clone-2'],
       upgradePlan: {
         targetRepo: topRepo,
-        rationale: `This repository showcases your highest domain relevance and has the foundation to become an interview-winning portfolio piece.`,
-        actionSteps: [
-          `Deploy a production live demo on Vercel, Render, or Fly.io and paste the live URL into the repository 'About' metadata right now.`,
-          `Record a 10-second demo GIF or capture high-resolution feature screenshots to anchor the top of your README.md.`,
-          `Add an 'Architecture & Key Engineering Decisions' section detailing why you picked your stack, how state is managed, and performance optimizations.`
-        ]
+        rationale: levelConfig.rationale,
+        actionSteps: levelConfig.steps
       },
       optimizedBio: `Software Engineer specializing in ${languages.slice(0, 2).join(' & ') || 'Full-Stack Systems'}. Building production-ready, performant web applications with clean architecture and live demos below 🚀`,
       readmeTemplate: `# ${topRepo} 🚀

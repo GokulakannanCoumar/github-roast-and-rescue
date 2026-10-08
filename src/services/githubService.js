@@ -175,8 +175,8 @@ class GitHubService {
 
     const escapedUser = username.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const linkRegex = new RegExp(
-      'href=["\\']/' + escapedUser + '/([^/"\\'?#]+)["\\']',
-      'gi'
+      "href=[\"']/" + escapedUser + "/([^/\"'?#]+)[\"']",
+      "gi"
     );
 
     const seen = new Set();

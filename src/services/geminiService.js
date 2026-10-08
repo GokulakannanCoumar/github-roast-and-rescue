@@ -48,7 +48,7 @@ function cleanAndParseJson(text) {
 
 function buildFallbackPayload(profileData, spiciness, notice, cacheKey, cacheable) {
   const result = generateSmartAnalysis(profileData, spiciness);
-  const validation = validateAnalysis(result: safeResult, profileData);
+  const validation = validateAnalysis(result, profileData);
 
   const safeResult = validation.valid ? result : {
     mode: spiciness,
@@ -81,7 +81,7 @@ function buildFallbackPayload(profileData, spiciness, notice, cacheKey, cacheabl
   };
 
   const payload = {
-    result,
+    result: safeResult,
     source: 'smart-heuristic-engine',
     notice
   };

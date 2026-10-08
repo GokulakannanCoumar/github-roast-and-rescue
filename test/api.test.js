@@ -2,6 +2,7 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const app = require('../server');
+const { DEMO_PROFILES } = require('../src/services/demoProfiles');
 
 describe('API Endpoints Integration', () => {
   let server;
@@ -116,6 +117,23 @@ describe('API Endpoints Integration', () => {
     const body = await res.json();
     assert.strictEqual(body.success, false);
     assert.match(body.error, /Invalid GitHub username/i);
+  });
+
+  it('POST /api/roast handles the Samantha demo profile end-to-end', async () => {
+    const res = await fetch(`${baseUrl}/api/roast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profileData: DEMO_PROFILES['samantha-stealth-dev'],
+        spiciness: 'mild'
+      })
+    });
+
+    const body = await res.json();
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(body.success, true);
+    assert.ok(body.result);
+    assert.ok(body.result.rescue?.upgradePlan?.targetRepo);
   });
 
 });

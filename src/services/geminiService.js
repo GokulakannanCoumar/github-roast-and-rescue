@@ -91,6 +91,10 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
   // If no API key is available, execute the deterministic Smart Heuristic Engine.
   if (!effectiveKey) {
     const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
+    const fallbackValidation = validateAnalysis(fallbackResult, safeProfile);
+    if (!fallbackValidation.valid) {
+      throw new Error('Fallback analysis failed contract validation.');
+    }
     const payload = {
       result: fallbackResult,
       source: 'smart-heuristic-engine',
@@ -143,7 +147,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
       const errorText = await response.text();
       console.warn(`[GeminiService] API returned ${response.status}: ${errorText.substring(0, 150)}`);
       // Fallback gracefully so end users and evaluators never encounter a failure
-      const fallbackResult = generateSmartAnalysis(profileData, spiciness);
+      const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
       return {
         result: fallbackResult,
         source: 'smart-heuristic-engine',
@@ -177,7 +181,7 @@ async function generateAnalysis(profileData, spiciness = 'medium', clientApiKey 
   } catch (err) {
     if (timeoutId) clearTimeout(timeoutId);
     console.warn('[GeminiService] Inference error, engaging fallback.');
-    const fallbackResult = generateSmartAnalysis(profileData, spiciness);
+    const fallbackResult = generateSmartAnalysis(safeProfile, spiciness);
     return {
       result: fallbackResult,
       source: 'smart-heuristic-engine',

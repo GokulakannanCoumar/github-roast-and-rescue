@@ -1,6 +1,6 @@
 {
   "name": "github-roast-and-rescue",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Google Build with AI - Prompt Wars: GitHub Roast and Rescue",
   "main": "server.js",
   "scripts": {
@@ -13,5 +13,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

@@ -22,16 +22,21 @@ function securityHeaders(req, res, next) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   // Prevent clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
-  // Legacy XSS filter activation
-  res.setHeader('X-XSS-Protection', '1; mode=block');
   // Referrer policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Permissions policy
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Cross-origin isolation hints reduce accidental data exposure.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
   // Content Security Policy
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.github.com;"
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.github.com;"
   );
 
   next();
@@ -48,10 +53,7 @@ function rateLimiter(req, res, next) {
   }
 
   // Safe client IP resolution behind Cloud Run / reverse proxies
-  const headers = req.headers || {};
-  const xForwardedFor = headers['x-forwarded-for'];
   const clientIp = req.ip ||
-    (typeof xForwardedFor === 'string' ? xForwardedFor.split(',')[0].trim() : null) ||
     (req.socket ? req.socket.remoteAddress : null) ||
     'unknown-ip';
 

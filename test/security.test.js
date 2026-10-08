@@ -26,9 +26,10 @@ describe('Security Middleware', () => {
       assert.strictEqual(nextCalled, true);
       assert.strictEqual(headers['x-content-type-options'], 'nosniff');
       assert.strictEqual(headers['x-frame-options'], 'DENY');
-      assert.strictEqual(headers['x-xss-protection'], '1; mode=block');
       assert.strictEqual(headers['referrer-policy'], 'strict-origin-when-cross-origin');
       assert.ok(headers['content-security-policy']);
+      assert.strictEqual(headers['cross-origin-opener-policy'], 'same-origin');
+      assert.strictEqual(headers['cross-origin-resource-policy'], 'same-origin');
     });
   });
 
@@ -69,7 +70,7 @@ describe('Security Middleware', () => {
         }
       };
 
-      // Exceed rate limit (limit is 45 in config)
+      // Exceed configured rate limit
       for (let i = 0; i < 50; i++) {
         rateLimiter(req, res, () => {});
       }

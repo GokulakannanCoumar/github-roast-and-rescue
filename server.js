@@ -27,7 +27,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400
 }));
-app.use(express.json({ limit: '512kb' }));
+app.use(express.json({ limit: '128kb', strict: true }));
 
 // 2. Static Assets with safe caching
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -53,7 +53,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: '2.0.0',
+    version: '2.1.0',
     model: config.geminiModel,
     cacheStats: githubService.cacheStats
   });
